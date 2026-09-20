@@ -1,4 +1,6 @@
+import shutil
 from pathlib import Path
+
 
 
 CATEGORIES = {
@@ -34,4 +36,22 @@ def clean_filename(filename):
 
 
 def organize_file(filepath, destination_root):
-    pass
+    filename = Path(filepath).name
+    category = get_category(filename)
+    new_name = clean_filename(filename)
+    destination_path = Path(destination_root) / category / new_name
+    destination_path = unique_path(destination_path)
+
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(filepath, destination_path)
+
+def unique_path(destination_path):
+    if not destination_path.exists():
+        return destination_path
+
+    counter = 1
+    while True:
+        new_path = destination_path.parent / (destination_path.stem + "_" + str(counter) + destination_path.suffix)
+        if not new_path.exists():
+            return new_path
+        counter = counter + 1
