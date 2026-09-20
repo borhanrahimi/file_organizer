@@ -4,9 +4,9 @@
 - [x] Project structure set up (src/organizer, tests, git, GitHub)
 - [x] `get_category()` — sorts by extension, with "Others" fallback for unknown types
 - [x] `clean_filename()` — lowercases, title-cases, strips spaces and parentheses
+- [x] `organize_file()` — ties `get_category()` and `clean_filename()` together and actually moves files
 
 ## Next
-- [ ] `organize_file()` — ties `get_category()` and `clean_filename()` together and actually moves files
 - [ ] Wire in `watchdog` for real-time folder watching
 - [ ] Test on a throwaway folder before pointing it at a real Downloads folder
 - [ ] Write automated tests (pytest) for `get_category` and `clean_filename`
