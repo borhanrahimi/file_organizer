@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+src/file_organizer.egg-info/PKG-INFO
+src/file_organizer.egg-info/SOURCES.txt
+src/file_organizer.egg-info/dependency_links.txt
+src/file_organizer.egg-info/top_level.txt
+src/organizer/__init__.py
+src/organizer/core.py
+test/test_core.py
