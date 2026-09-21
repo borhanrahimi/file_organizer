@@ -34,3 +34,8 @@
   somewhere, since this runs unattended in the background.
 - Filenames are cleaned but not made "perfect" — good enough to be readable
   and sortable, not chasing 100% correctness on every edge case in v1.
+
+- Learned the hard way that `assert some_function(...)` with no comparison
+  is a near-useless test — it passes as long as the function returns
+  anything truthy. Every real test compares against a specific, verified
+  expected value.
