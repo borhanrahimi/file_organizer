@@ -1,0 +1,27 @@
+watch_folder: "/path/to/folder/to/watch"
+destination_root: "/path/to/folder/where/organized/files/go"
+
+categories:
+  Images:
+    - .jpg
+    - .jpeg
+    - .png
+    - .gif
+    - .bmp
+  Documents:
+    - .pdf
+    - .docx
+    - .txt
+    - .xlsx
+  Videos:
+    - .mp4
+    - .avi
+    - .mov
+  Music:
+    - .mp3
+    - .wav
+    - .flac
+  Archives:
+    - .zip
+    - .rar
+    - .tar.gz

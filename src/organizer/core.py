@@ -1,21 +1,13 @@
 import shutil
 from pathlib import Path
+import yaml
 
-
-
-CATEGORIES = {
-    "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp"],
-    "Documents": [".pdf", ".docx", ".txt", ".xlsx"],
-    "Videos": [".mp4", ".avi", ".mov"],
-    "Music": [".mp3", ".wav", ".flac"],
-    "Archives": [".zip", ".rar", ".tar.gz"]
-}
 
 # TODO: Path().suffix only grabs the last extension, so "file.tar.gz" becomes
 # ".gz" not ".tar.gz" and won't match the Archives category correctly.
-def get_category(filename):
+def get_category(filename, categories):
     extension = Path(filename).suffix.lower()
-    for category, extensions in CATEGORIES.items():
+    for category, extensions in categories.items():
         if extension in extensions:
             return category
     return "Others"
@@ -35,9 +27,9 @@ def clean_filename(filename):
     return stem + extension
 
 
-def organize_file(filepath, destination_root):
+def organize_file(filepath, destination_root, categories):
     filename = Path(filepath).name
-    category = get_category(filename)
+    category = get_category(filename, categories)
     new_name = clean_filename(filename)
     destination_path = Path(destination_root) / category / new_name
     destination_path = unique_path(destination_path)
@@ -60,21 +52,26 @@ def unique_path(destination_path):
 from watchdog.events import FileSystemEventHandler
 
 class DownloadHandler (FileSystemEventHandler):
-    def __init__(self, destination_root):
+    def __init__(self, destination_root, categories):
         self.destination_root = destination_root
+        self.categories = categories
     
     def on_created(self, event):
-        organize_file(event.src_path, self.destination_root)
+        organize_file(event.src_path, self.destination_root, self.categories)
 
 import time
 from watchdog.observers import Observer
 
 if __name__ == "__main__":
-    watch_folder ="/Users/borhanrahimi/Desktop/organizer_playground/source"
-    destination_root = "/Users/borhanrahimi/Desktop/organizer_playground/organized"
+    with open("config.yaml") as f:
+        config = yaml.safe_load(f)
+
+    watch_folder = config["watch_folder"]
+    destination_root = config["destination_root"]
+    categories = config["categories"]
 
     observer = Observer()
-    observer.schedule(DownloadHandler(destination_root), watch_folder, recursive=False)
+    observer.schedule(DownloadHandler(destination_root, categories), watch_folder, recursive=False)
     observer.start()
 
     print(f"Watching folder: {watch_folder}...")

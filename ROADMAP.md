@@ -8,9 +8,9 @@
 - [x] Wire in `watchdog` for real-time folder watching
 - [x] Test on a throwaway folder before pointing it at a real Downloads folder
 - [x] Write automated tests (pytest) for `get_category` and `clean_filename`
+- [x] Turn hardcoded CATEGORIES / watch folder into a config file or CLI args
 
 ## Next
-- [ ] Turn hardcoded CATEGORIES / watch folder into a config file or CLI args
 - [ ] Set up GitHub Actions CI to run tests automatically
 - [ ] Package it (pyproject.toml) so it's pip-installable
 - [ ] Record a short demo GIF for the README

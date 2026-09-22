@@ -1,22 +1,25 @@
-
 from organizer.core import get_category
+
+TEST_CATEGORIES = {
+    "Images": [".jpg", ".jpeg", ".png"],
+    "Documents": [".pdf", ".docx"],
+}
+
 def test_sanity():
     assert 1+1 == 2
 
 def test_get_category_image():
-    assert get_category("photo.jpg") == "Images"
+    assert get_category("photo.jpg", TEST_CATEGORIES ) == "Images"
 
 def test_get_category_document():
-    # a .pdf should return "Documents"
-    assert get_category("file.pdf") == "Documents"
+    assert get_category("file.pdf", TEST_CATEGORIES) == "Documents"
 
 def test_get_category_unknown():
-    # an extension not in CATEGORIES, like .xyz, should return "Others"
-    assert get_category("file.xyz") == "Others"
+    assert get_category("file.xyz", TEST_CATEGORIES) == "Others"
 
 def test_get_category_uppercase():
-    # "PHOTO.JPG" should still return "Images" — .lower() should handle this
-    assert get_category("PHOTO.JPG") == "Images"
+    assert get_category("PHOTO.JPG", TEST_CATEGORIES) == "Images"
+
 
 from organizer.core import get_category, clean_filename
 
