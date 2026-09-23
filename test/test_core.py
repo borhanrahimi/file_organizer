@@ -21,7 +21,7 @@ def test_get_category_uppercase():
     assert get_category("PHOTO.JPG", TEST_CATEGORIES) == "Images"
 
 
-from organizer.core import get_category, clean_filename
+from organizer.core import get_category, clean_filename, organize_file
 
 def test_clean_filename_basic():
     assert clean_filename("final_report FINAL (2).docx") == "Final_Report_Final_2.docx"
@@ -41,3 +41,14 @@ def test_unique_path_with_collision(tmp_path):
 
     result = unique_path(destination)
     assert result == tmp_path / "report_1.pdf"
+
+def test_organize_file_moves_and_categorizes(tmp_path):
+    source_file = tmp_path / "photo.jpg"
+    source_file.touch()
+
+    destination_root = tmp_path / "organized"
+
+    organize_file(source_file, destination_root, TEST_CATEGORIES)
+    
+    assert (destination_root / "Images" / "Photo.jpg").exists()
+    assert not source_file.exists()
