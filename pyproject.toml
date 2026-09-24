@@ -7,7 +7,7 @@ name = "file-organizer"
 version = "0.1.0"
 dependencies = [
     "watchdog",
-    "PyYAMAL",
+    "PyYAML",
 ]
 
 [tool.setuptools.packages.find]
