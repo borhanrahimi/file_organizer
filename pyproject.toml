@@ -5,6 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "file-organizer"
 version = "0.1.0"
+dependencies = [
+    "watchdog",
+    "PyYAMAL",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
