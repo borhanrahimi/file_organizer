@@ -1,6 +1,7 @@
 import shutil
 from pathlib import Path
 import yaml
+import logging
 
 
 # TODO: Path().suffix only grabs the last extension, so "file.tar.gz" becomes
@@ -36,6 +37,7 @@ def organize_file(filepath, destination_root, categories):
 
     destination_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(filepath, destination_path)
+    logging.info("Moved file: %s -> %s", filepath, destination_path)
 
 def unique_path(destination_path):
     if not destination_path.exists():
@@ -63,6 +65,10 @@ import time
 from watchdog.observers import Observer
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+    )
     with open("config.yaml") as f:
         config = yaml.safe_load(f)
 
