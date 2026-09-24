@@ -9,12 +9,18 @@
 - [x] Test on a throwaway folder before pointing it at a real Downloads folder
 - [x] Write automated tests (pytest) for `get_category` and `clean_filename`
 - [x] Turn hardcoded CATEGORIES / watch folder into a config file or CLI args
+- [x] Set up GitHub Actions CI to run tests automatically
+- [x] Package it (pyproject.toml) so it's pip-installable
+- [x] Log successful file moves with timestamps, source paths, and destination paths
 
 ## Next
-- [ ] Set up GitHub Actions CI to run tests automatically
-- [ ] Package it (pyproject.toml) so it's pip-installable
 - [ ] Record a short demo GIF for the README
+- [ ] Separate file operations, folder watching, and application startup into modules
 - [ ] Autostart on login (launchd on Mac / Task Scheduler on Windows)
+- [ ] Finish and validate the macOS LaunchAgent configuration
+- [ ] Test the organizer in the background and confirm move messages reach the log file
+- [ ] Verify autostart after logging out and back in
+- [ ] Document how to start, stop, and disable the background organizer
 
 ## Later / optional
 - [ ] AI-based smart naming (reads file content, not just filename)
@@ -39,3 +45,8 @@
   is a near-useless test — it passes as long as the function returns
   anything truthy. Every real test compares against a specific, verified
   expected value.
+
+- Successful moves are logged after shutil.move() completes, recording the
+  timestamp, original path, and destination path.
+- Logging currently writes to standard error. When run through the
+  LaunchAgent, those messages are captured in its configured error log.
