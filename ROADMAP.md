@@ -12,10 +12,10 @@
 - [x] Set up GitHub Actions CI to run tests automatically
 - [x] Package it (pyproject.toml) so it's pip-installable
 - [x] Log successful file moves with timestamps, source paths, and destination paths
+- [x] Separate file operations, folder watching, and application startup into modules
 
 ## Next
 - [ ] Record a short demo GIF for the README
-- [ ] Separate file operations, folder watching, and application startup into modules
 - [ ] Autostart on login (launchd on Mac / Task Scheduler on Windows)
 - [ ] Finish and validate the macOS LaunchAgent configuration
 - [ ] Test the organizer in the background and confirm move messages reach the log file
@@ -53,10 +53,10 @@
 
 
 ## Where I left off
-- File-move logging works in the terminal.
-- CI and packaging are complete.
-- macOS autostart still needs verification.
+- Module refactor is complete.
+- All 10 tests pass, and a sample file moved successfully.
+- README now uses python3 -m organizer.
 
 ## Next session
-- Start the refactor by moving DownloadHandler into watcher.py.
-- Update imports and run the tests.
+- Update the macOS LaunchAgent to run python3 -m organizer.
+- Verify background startup and move logging.

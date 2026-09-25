@@ -60,8 +60,10 @@ template.
 
 ## Usage
 
+Run from the project root so the organizer can find `config.yaml`:
+
 ```bash
-python3 src/organizer/core.py
+python3 -m organizer
 ```
 
 It'll print `Watching folder: ...` and run until you stop it with `Ctrl+C`.
@@ -71,6 +73,10 @@ It'll print `Watching folder: ...` and run until you stop it with `Ctrl+C`.
 Watched folder -> `watchdog` observer -> `organize_file()` -> destination
 folders (deduplicated via `unique_path()`). See `docs/architecture.md` for
 the full breakdown and design decisions.
+
+- `core.py` handles categorization, filename cleanup, collision handling, and file moves.
+- `watcher.py` handles filesystem events and the observer loop.
+- `__main__.py` configures logging, reads `config.yaml`, and starts the watcher.
 
 ## Development
 
