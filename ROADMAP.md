@@ -17,11 +17,15 @@
 - [x] Verify autostart after logging out and back in
 - [x] Finish and validate the macOS LaunchAgent configuration
 - [x] Document how to start, stop, and disable the background organizer
+- [x] Watch for newly created files inside subfolders
+- [x] Ignore directory events and the exact .DS_Store filename
 
 ## Next
+- [ ] Run the new directory-handler test
+- [ ] Add permanent tests for .DS_Store, ordinary files, and similarly named files
+- [ ] Scan files already present before startup
+- [ ] Handle unfinished downloads before moving them
 - [ ] Record a short demo GIF for the README
-- [ ] Autostart on login (launchd on Mac / Task Scheduler on Windows)
-- [ ] Document how to start, stop, and disable the background organizer
 
 ## Later / optional
 - [ ] AI-based smart naming (reads file content, not just filename)
@@ -56,10 +60,13 @@
 
 
 ## Where I left off
-- Module refactor is complete.
-- All 10 tests pass, and a sample file moved successfully.
-- README now uses python3 -m organizer.
+- macOS autostart and background logging work and are documented.
+- Watching subfolders was verified with a sample file.
+- Directory and .DS_Store guards passed temporary checks.
+- test/test_watcher.py now contains a directory-handler test.
+- The permanent test suite has not been rerun since adding that test.
 
 ## Next session
-- Update the macOS LaunchAgent to run python3 -m organizer.
-- Verify background startup and move logging.
+- Run python3 -m pytest -v.
+- Add the remaining three watcher tests.
+- Confirm the background organizer was restarted to load the latest guard.
