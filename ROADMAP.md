@@ -50,3 +50,13 @@
   timestamp, original path, and destination path.
 - Logging currently writes to standard error. When run through the
   LaunchAgent, those messages are captured in its configured error log.
+
+
+## Where I left off
+- File-move logging works in the terminal.
+- CI and packaging are complete.
+- macOS autostart still needs verification.
+
+## Next session
+- Start the refactor by moving DownloadHandler into watcher.py.
+- Update imports and run the tests.

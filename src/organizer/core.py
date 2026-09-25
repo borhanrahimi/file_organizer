@@ -51,20 +51,8 @@ def unique_path(destination_path):
         counter = counter + 1
 
 
-from watchdog.events import FileSystemEventHandler
-
-class DownloadHandler (FileSystemEventHandler):
-    def __init__(self, destination_root, categories):
-        self.destination_root = destination_root
-        self.categories = categories
-    
-    def on_created(self, event):
-        organize_file(event.src_path, self.destination_root, self.categories)
-
-import time
-from watchdog.observers import Observer
-
 if __name__ == "__main__":
+    from organizer.watcher import start_watching
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
@@ -76,15 +64,4 @@ if __name__ == "__main__":
     destination_root = config["destination_root"]
     categories = config["categories"]
 
-    observer = Observer()
-    observer.schedule(DownloadHandler(destination_root, categories), watch_folder, recursive=False)
-    observer.start()
-
-    print(f"Watching folder: {watch_folder}...")
-
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+    start_watching(watch_folder, destination_root, categories)
