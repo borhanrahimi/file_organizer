@@ -13,19 +13,22 @@
 - [x] Package it (pyproject.toml) so it's pip-installable
 - [x] Log successful file moves with timestamps, source paths, and destination paths
 - [x] Separate file operations, folder watching, and application startup into modules
+- [x] Test the organizer in the background and confirm move messages reach the log file
+- [x] Verify autostart after logging out and back in
+- [x] Finish and validate the macOS LaunchAgent configuration
+- [x] Document how to start, stop, and disable the background organizer
 
 ## Next
 - [ ] Record a short demo GIF for the README
 - [ ] Autostart on login (launchd on Mac / Task Scheduler on Windows)
-- [ ] Finish and validate the macOS LaunchAgent configuration
-- [ ] Test the organizer in the background and confirm move messages reach the log file
-- [ ] Verify autostart after logging out and back in
 - [ ] Document how to start, stop, and disable the background organizer
 
 ## Later / optional
 - [ ] AI-based smart naming (reads file content, not just filename)
 - [ ] Tray/menu-bar app instead of a background script
 - [ ] Undo/history so a bad auto-move is reversible
+- [ ] Build a macOS menu-bar interface with start/stop controls
+- [ ] Package the organizer as a standalone macOS .app
 
 ## Known limitations
 - `Path(filename).suffix` only grabs the last extension, so `backup.tar.gz` becomes
