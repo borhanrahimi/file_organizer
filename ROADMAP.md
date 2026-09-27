@@ -19,12 +19,14 @@
 - [x] Document how to start, stop, and disable the background organizer
 - [x] Watch for newly created files inside subfolders
 - [x] Ignore directory events and the exact .DS_Store filename
+- [x] Scan files already present before startup
+- [x] Run the new directory-handler test
+- [x] Add permanent tests for .DS_Store and ordinary files
+- [x] Test the startup scan with existing files, subfolders, and .DS_Store
 
 ## Next
 - [ ] Handle files moved into the watched folder using on_moved
-- [ ] Run the new directory-handler test
-- [ ] Add permanent tests for .DS_Store, ordinary files, and similarly named files
-- [ ] Scan files already present before startup
+- [ ] Add a test for filenames similar to .DS_Store
 - [ ] Handle unfinished downloads before moving them
 - [ ] Record a short demo GIF for the README
 
@@ -63,11 +65,13 @@
 ## Where I left off
 - macOS autostart and background logging work and are documented.
 - Watching subfolders was verified with a sample file.
-- Directory and .DS_Store guards passed temporary checks.
-- test/test_watcher.py now contains a directory-handler test.
-- The permanent test suite has not been rerun since adding that test.
+- Permanent tests cover directory events, .DS_Store, and ordinary files.
+- The startup scan is implemented, tested, and connected to start_watching().
+- All tests passed.
+- Files moved into the watched folder still need an on_moved handler.
 
 ## Next session
+- Add an on_moved handler using event.dest_path.
+- Add tests for moved files and ignoring moved .DS_Store files.
 - Run python3 -m pytest -v.
-- Add the remaining three watcher tests.
-- Confirm the background organizer was restarted to load the latest guard.
+- Restart the background organizer and verify moved-file handling.

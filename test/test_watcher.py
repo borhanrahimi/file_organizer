@@ -1,5 +1,5 @@
 from watchdog.events import DirCreatedEvent, FileCreatedEvent
-from organizer.watcher import DownloadHandler
+from organizer.watcher import DownloadHandler, organize_existing_files  
 
 def test_handler_ignores_directories(tmp_path):
 
@@ -42,3 +42,31 @@ def test_handler_organizes_created_file(tmp_path):
     organized_file = destination / "Images" / "Holiday_Photo.webp"
     assert organized_file.read_bytes() == b"dummy content"
     assert not source_file.exists()
+
+def test_scan_organizes_existing_files(tmp_path):
+    source = tmp_path / "source"
+    nested = source / "nested"
+    nested.mkdir(parents=True)
+
+    photo = source / "old photo.webp"
+    photo.write_text("photo content")
+
+    document = nested / "old notes.txt"
+    document.write_text("notes content")
+
+    metadata = source / ".DS_Store"
+    metadata.touch()
+
+    destination = tmp_path / "organized"
+    categories = {
+        "Images": [".webp"],
+        "Documents": [".txt"],
+    }
+
+    organize_existing_files(source, destination, categories)
+
+    assert (destination / "Images" / "Old_Photo.webp").read_text() == "photo content"
+    assert (destination / "Documents" / "Old_Notes.txt").read_text() == "notes content"
+    assert not photo.exists()
+    assert not document.exists()
+    assert metadata.exists()

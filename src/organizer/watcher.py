@@ -18,7 +18,20 @@ class DownloadHandler(FileSystemEventHandler):
         
         organize_file(event.src_path, self.destination_root, self.categories)
 
+
+def organize_existing_files(watch_folder, destination_root, categories):
+    for filepath in Path(watch_folder).rglob('*'):
+        if not filepath.is_file():
+            continue
+        if filepath.name == ".DS_Store":
+            continue
+        if filepath.resolve().is_relative_to(Path(destination_root).resolve()):
+            continue
+        organize_file(filepath, destination_root, categories)
+
 def start_watching(watch_folder, destination_root, categories):
+    organize_existing_files(watch_folder, destination_root, categories)
+    
     observer = Observer()
     observer.schedule(
         DownloadHandler(destination_root, categories), 
