@@ -21,6 +21,7 @@
 - [x] Ignore directory events and the exact .DS_Store filename
 
 ## Next
+- [ ] Handle files moved into the watched folder using on_moved
 - [ ] Run the new directory-handler test
 - [ ] Add permanent tests for .DS_Store, ordinary files, and similarly named files
 - [ ] Scan files already present before startup
