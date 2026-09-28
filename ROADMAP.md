@@ -36,14 +36,17 @@
 - [x] Add a file-signature helper to detect changes
 - [x] Add a readiness tracker that measures how long a file stays unchanged
 - [x] Test readiness timing, changes resetting the timer, and clearing tracked files
+- [x] Queue created and moved files for readiness checks
+- [x] Recheck pending files in the processing loop
+- [x] Test delayed organization and changes resetting the waiting period
+- [x] Update event-handler tests for queued processing
 
 ## Next
-- [ ] Add a readiness check for files written directly to their final filename
+- [ ] Connect startup scanning to the readiness queue and verify integration
 - [ ] Choose the frontend framework and document the decision
 - [ ] Document frontend/backend communication and process ownership
 - [ ] Document file-safety requirements and error behavior
 - [ ] Restore the startup-scan test for temporary downloads
-- [ ] Add a readiness check for files written directly to their final filename
 - [ ] Add backend configuration validation and start/stop/status controls
 - [ ] Build the frontend status screen and connect it to the backend
 - [ ] Record a short demo GIF for the README
@@ -56,6 +59,8 @@
 - [ ] Package the organizer as a standalone macOS .app
 
 ## Known limitations
+- A file remaining unchanged for three seconds does not guarantee writing
+  has finished; a paused download may resume later.
 - `Path(filename).suffix` only grabs the last extension, so `backup.tar.gz` becomes
   `.gz`, not `.tar.gz`, and won't match the Archives category correctly. Needs a
   special case for multi-part extensions.
@@ -92,9 +97,14 @@
 - Tests cover temporary downloads and organization after the final rename.
 - The similarly named .DS_Store file test passes.
 
+- Created and moved files now wait for stability before organization.
+- All 27 tests pass.
+- Startup scanning still moves existing files immediately.
+- Watcher and test changes committed as 7c8dc3a.
+
 ## Next session
-- Connect the readiness tracker to a pending-file queue.
-- Queue created, moved, and startup files instead of moving them immediately.
-- Recheck pending files without blocking event handling.
-- Test that changing files remain pending and stable files get organized.
-- Verify the behavior before restarting the background service.
+- Change the startup scan to queue existing files.
+- Update the startup-scan test for delayed organization.
+- Restore startup coverage for temporary downloads.
+- Test duplicate events, disappearing files, and retries after move failures.
+- Run the full suite before restarting and manually testing the service.
