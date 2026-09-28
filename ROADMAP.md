@@ -23,10 +23,10 @@
 - [x] Run the new directory-handler test
 - [x] Add permanent tests for .DS_Store and ordinary files
 - [x] Test the startup scan with existing files, subfolders, and .DS_Store
+- [x] Handle files moved into the watched folder using on_moved
+- [x] Add a test for filenames similar to .DS_Store
 
 ## Next
-- [ ] Handle files moved into the watched folder using on_moved
-- [ ] Add a test for filenames similar to .DS_Store
 - [ ] Handle unfinished downloads before moving them
 - [ ] Record a short demo GIF for the README
 
@@ -68,10 +68,10 @@
 - Permanent tests cover directory events, .DS_Store, and ordinary files.
 - The startup scan is implemented, tested, and connected to start_watching().
 - All tests passed.
-- Files moved into the watched folder still need an on_moved handler.
+- on_moved handles files using event.dest_path.
+- Tests for moved files and ignoring moved .DS_Store files pass.
 
 ## Next session
-- Add an on_moved handler using event.dest_path.
-- Add tests for moved files and ignoring moved .DS_Store files.
-- Run python3 -m pytest -v.
 - Restart the background organizer and verify moved-file handling.
+- Add a test for filenames similar to .DS_Store.
+- Begin handling unfinished downloads before moving them.

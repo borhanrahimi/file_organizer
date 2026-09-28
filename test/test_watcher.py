@@ -1,4 +1,4 @@
-from watchdog.events import DirCreatedEvent, FileCreatedEvent
+from watchdog.events import DirCreatedEvent, FileCreatedEvent, FileMovedEvent
 from organizer.watcher import DownloadHandler, organize_existing_files  
 
 def test_handler_ignores_directories(tmp_path):
@@ -70,3 +70,30 @@ def test_scan_organizes_existing_files(tmp_path):
     assert not photo.exists()
     assert not document.exists()
     assert metadata.exists()
+
+def test_handler_organizes_moved_file(tmp_path):
+    old_path = tmp_path / "old photo.webp"
+    new_path = tmp_path / "holiday photo.webp"
+    new_path.write_text("photo content")
+
+    destination = tmp_path / "organized"
+    handler = DownloadHandler(destination, {"Images": [".webp"]})
+
+    handler.on_moved(FileMovedEvent(str(old_path), str(new_path)))
+
+    organized_file = destination / "Images" / "Holiday_Photo.webp"
+    assert organized_file.read_text() == "photo content"
+    assert not new_path.exists()
+
+def test_handler_ignores_moved_ds_store(tmp_path):
+    old_path = tmp_path / "old metadata"
+    new_path = tmp_path / ".DS_Store"
+    new_path.touch()
+
+    destination = tmp_path / "organized"
+    handler = DownloadHandler(destination, {"Images": [".webp"]})
+
+    handler.on_moved(FileMovedEvent(str(old_path), str(new_path)))
+
+    assert new_path.exists()
+    assert not destination.exists()
