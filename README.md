@@ -27,7 +27,7 @@ real everyday problem, rather than being a toy exercise.
 ## Install
 
 ```bash
-pip install -e .
+python3 -m pip install -e ./backend
 ```
 
 ## Configuration
@@ -158,9 +158,9 @@ the full breakdown and design decisions.
 ## Development
 
 ```bash
-pip install -e .
-pip install pytest pyyaml
-pytest -v
+python3 -m pip install -e ./backend
+python3 -m pip install pytest
+python3 -m pytest backend/test -v
 ```
 
 ## Roadmap

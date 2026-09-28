@@ -27,9 +27,22 @@
 - [x] Add a test for filenames similar to .DS_Store
 - [x] Skip temporary download extensions in event handlers and startup scans
 - [x] Test temporary downloads and organization after the final rename
+- [x] Move the Python package and tests into backend/
+- [x] Create frontend/ with its own README
+- [x] Keep shared architecture documentation in root docs/
+- [x] Update CI and README commands for the backend location
+- [x] Verify the relocated package imports and all 19 tests pass
 
 ## Next
 - [ ] Add a readiness check for files written directly to their final filename
+- [ ] Document first-version scope and user flows in docs/product.md
+- [ ] Choose the frontend framework and document the decision
+- [ ] Document frontend/backend communication and process ownership
+- [ ] Document file-safety requirements and error behavior
+- [ ] Restore the startup-scan test for temporary downloads
+- [ ] Add a readiness check for files written directly to their final filename
+- [ ] Add backend configuration validation and start/stop/status controls
+- [ ] Build the frontend status screen and connect it to the backend
 - [ ] Record a short demo GIF for the README
 
 ## Later / optional
@@ -77,6 +90,7 @@
 - The similarly named .DS_Store file test passes.
 
 ## Next session
-- Restart the background organizer and verify temporary-download handling.
-- Add a readiness check for files written directly to their final filename.
-- Add tests for the readiness check and run the full test suite.
+- Draft docs/product.md before implementing the frontend.
+- Define status, start/stop, folder settings, and recent activity.
+- Explain startup scanning and what happens when something fails.
+- Separate planned features from behavior already implemented.
