@@ -32,10 +32,13 @@
 - [x] Keep shared architecture documentation in root docs/
 - [x] Update CI and README commands for the backend location
 - [x] Verify the relocated package imports and all 19 tests pass
+- [x] Document first-version scope and user flows in docs/product.md
+- [x] Add a file-signature helper to detect changes
+- [x] Add a readiness tracker that measures how long a file stays unchanged
+- [x] Test readiness timing, changes resetting the timer, and clearing tracked files
 
 ## Next
 - [ ] Add a readiness check for files written directly to their final filename
-- [ ] Document first-version scope and user flows in docs/product.md
 - [ ] Choose the frontend framework and document the decision
 - [ ] Document frontend/backend communication and process ownership
 - [ ] Document file-safety requirements and error behavior
@@ -90,7 +93,8 @@
 - The similarly named .DS_Store file test passes.
 
 ## Next session
-- Draft docs/product.md before implementing the frontend.
-- Define status, start/stop, folder settings, and recent activity.
-- Explain startup scanning and what happens when something fails.
-- Separate planned features from behavior already implemented.
+- Connect the readiness tracker to a pending-file queue.
+- Queue created, moved, and startup files instead of moving them immediately.
+- Recheck pending files without blocking event handling.
+- Test that changing files remain pending and stable files get organized.
+- Verify the behavior before restarting the background service.
