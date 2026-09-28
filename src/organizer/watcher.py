@@ -4,28 +4,35 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from organizer.core import organize_file
 
+TEMP_DOWNLOAD_EXTENSIONS = {".crdownload", ".part", ".download"}
+
+def is_temporary_file(filepath):
+    return Path(filepath).suffix.lower() in TEMP_DOWNLOAD_EXTENSIONS
+
 class DownloadHandler(FileSystemEventHandler):
     def __init__(self, destination_root, categories):
         self.destination_root = destination_root
         self.categories = categories
     
     def on_created(self, event):
+
         if event.is_directory:
             return
-        
         if Path(event.src_path).name == (".DS_Store"):
             return
-        
+        if is_temporary_file(event.src_path):
+            return
         organize_file(event.src_path, self.destination_root, self.categories)
     
     def on_moved(self, event):
         if event.is_directory:
             return
-        
         filepath = Path(event.dest_path)
         if filepath.name == (".DS_Store"):
             return
         if not filepath.is_file():
+            return
+        if is_temporary_file(filepath):
             return
         organize_file(filepath, self.destination_root, self.categories)
 
@@ -36,6 +43,8 @@ def organize_existing_files(watch_folder, destination_root, categories):
         if filepath.name == ".DS_Store":
             continue
         if filepath.resolve().is_relative_to(Path(destination_root).resolve()):
+            continue
+        if is_temporary_file(filepath):
             continue
         organize_file(filepath, destination_root, categories)
 
@@ -57,4 +66,3 @@ def start_watching(watch_folder, destination_root, categories):
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
-    

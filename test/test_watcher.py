@@ -97,3 +97,75 @@ def test_handler_ignores_moved_ds_store(tmp_path):
 
     assert new_path.exists()
     assert not destination.exists()
+
+def test_handler_organizes_similarly_named_file(tmp_path):
+    source_file = tmp_path / ".DS_Store.txt"
+    source_file.write_text("keep this content")
+
+    destination = tmp_path / "organized"
+    handler = DownloadHandler(destination, {"Documents": [".txt"]})
+
+    handler.on_created(FileCreatedEvent(str(source_file)))
+
+    organized_file = destination / "Documents" / ".Ds_Store.txt"
+    assert organized_file.read_text() == "keep this content"
+    assert not source_file.exists()
+
+def test_download_is_organized_after_completion(tmp_path):
+    temporary_file = tmp_path / "holiday photo.webp.crdownload"
+    temporary_file.write_text("photo content")
+
+    destination = tmp_path / "organized"
+    handler = DownloadHandler(destination, {"Images": [".webp"]})
+
+    handler.on_created(FileCreatedEvent(str(temporary_file)))
+
+    assert temporary_file.read_text() == "photo content"
+    assert not destination.exists()
+
+    completed_file = tmp_path / "holiday photo.webp"
+    temporary_file.rename(completed_file)
+
+    handler.on_moved(
+        FileMovedEvent(str(temporary_file), str(completed_file))
+    )
+
+    organized_file = destination / "Images" / "Holiday_Photo.webp"
+    assert organized_file.read_text() == "photo content"
+    assert not completed_file.exists()
+
+def test_download_is_organized_after_completion(tmp_path):
+    temporary_file = tmp_path / "holiday photo.webp.crdownload"
+    temporary_file.write_text("photo content")
+
+    destination = tmp_path / "organized"
+    handler = DownloadHandler(destination, {"Images": [".webp"]})
+
+    handler.on_created(FileCreatedEvent(str(temporary_file)))
+
+    assert temporary_file.read_text() == "photo content"
+    assert not destination.exists()
+
+    completed_file = tmp_path / "holiday photo.webp"
+    temporary_file.rename(completed_file)
+
+    handler.on_moved(
+        FileMovedEvent(str(temporary_file), str(completed_file))
+    )
+
+    organized_file = destination / "Images" / "Holiday_Photo.webp"
+    assert organized_file.read_text() == "photo content"
+    assert not completed_file.exists()
+
+def test_handler_ignores_moved_temporary_download(tmp_path):
+    old_path = tmp_path / "previous.part"
+    new_path = tmp_path / "photo.webp.part"
+    new_path.write_text("unfinished content")
+
+    destination = tmp_path / "organized"
+    handler = DownloadHandler(destination, {"Images": [".webp"]})
+
+    handler.on_moved(FileMovedEvent(str(old_path), str(new_path)))
+
+    assert new_path.read_text() == "unfinished content"
+    assert not destination.exists()

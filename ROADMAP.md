@@ -25,9 +25,11 @@
 - [x] Test the startup scan with existing files, subfolders, and .DS_Store
 - [x] Handle files moved into the watched folder using on_moved
 - [x] Add a test for filenames similar to .DS_Store
+- [x] Skip temporary download extensions in event handlers and startup scans
+- [x] Test temporary downloads and organization after the final rename
 
 ## Next
-- [ ] Handle unfinished downloads before moving them
+- [ ] Add a readiness check for files written directly to their final filename
 - [ ] Record a short demo GIF for the README
 
 ## Later / optional
@@ -70,8 +72,11 @@
 - All tests passed.
 - on_moved handles files using event.dest_path.
 - Tests for moved files and ignoring moved .DS_Store files pass.
+- Temporary download extensions are skipped by both event handlers and the startup scan.
+- Tests cover temporary downloads and organization after the final rename.
+- The similarly named .DS_Store file test passes.
 
 ## Next session
-- Restart the background organizer and verify moved-file handling.
-- Add a test for filenames similar to .DS_Store.
-- Begin handling unfinished downloads before moving them.
+- Restart the background organizer and verify temporary-download handling.
+- Add a readiness check for files written directly to their final filename.
+- Add tests for the readiness check and run the full test suite.
