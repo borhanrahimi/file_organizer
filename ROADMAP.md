@@ -49,14 +49,14 @@
 - [x] Reject a watch folder that is the same as, or inside, the destination
 - [x] Test missing, empty, and invalid configs plus a valid config (38 tests pass)
 - [x] Sort multi-part extensions like .tar.gz correctly (longest match wins; 41 tests pass)
+- [x] Choose Tauri + React + TypeScript for the frontend (ADR 001)
+- [x] Scaffold the Tauri app in frontend/
+- [x] Design frontend/backend communication and process ownership (ADR 002)
 
 
 ## Next
-- [ ] Add backend start/stop/status controls
-- [ ] Choose the frontend framework and document the decision
-- [ ] Document frontend/backend communication and process ownership
+- [ ] Add the backend HTTP API with start/stop/status (see ADR 002)
 - [ ] Document file-safety requirements and error behavior
-- [ ] Add backend configuration validation and start/stop/status controls
 - [ ] Build the frontend status screen and connect it to the backend
 - [ ] Record a short demo GIF for the README
 

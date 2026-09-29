@@ -3,8 +3,9 @@
 ## Current status and structure
 
 The Python backend runs from the terminal or a macOS LaunchAgent. The frontend
-is planned as a cross-platform Tauri desktop app; its communication method with
-the backend has not been selected.
+is planned as a cross-platform Tauri desktop app. See
+[ADR 002](decisions/002-frontend-backend-communication.md) for how the frontend
+and backend communicate.
 
 - `backend/src/organizer/` contains application startup, file operations,
   filesystem watching, and readiness tracking.
