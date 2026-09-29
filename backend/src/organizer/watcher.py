@@ -78,30 +78,21 @@ class DownloadHandler(FileSystemEventHandler):
 
         self.queue_file(event.dest_path)
 
-def organize_existing_files(watch_folder, destination_root, categories):
-    for filepath in Path(watch_folder).rglob('*'):
-        if not filepath.is_file():
-            continue
-        if filepath.name == ".DS_Store":
-            continue
-        if filepath.resolve().is_relative_to(Path(destination_root).resolve()):
-            continue
-        if is_temporary_file(filepath):
-            continue
-        organize_file(filepath, destination_root, categories)
+def queue_existing_files(watch_folder, handler):
+    for filepath in Path  (watch_folder).rglob("*"):
+        handler.queue_file(filepath)
 
 def start_watching(watch_folder, destination_root, categories):
-    organize_existing_files(watch_folder, destination_root, categories)
-
     handler = DownloadHandler(destination_root, categories)
 
     observer = Observer()
     observer.schedule(handler, watch_folder, recursive=True)
     observer.start()
 
-    print(f"Watching folder: {watch_folder}...")
-
     try:
+        queue_existing_files(watch_folder, handler)
+        print(f"Watching folder: {watch_folder}...")
+
         while True:
             handler.process_pending()
             time.sleep(1)

@@ -40,13 +40,17 @@
 - [x] Recheck pending files in the processing loop
 - [x] Test delayed organization and changes resetting the waiting period
 - [x] Update event-handler tests for queued processing
+- [x] Connect startup scanning to the readiness queue and verify integration
+- [x] Restore the startup-scan test for temporary downloads
+- [x] Test duplicate events, disappearing files, and retries after move failures
+- [x] Verify readiness behavior with 31 tests and a manual background-service check
+- [x] Document queued processing and readiness limitations in architecture.md
+
 
 ## Next
-- [ ] Connect startup scanning to the readiness queue and verify integration
 - [ ] Choose the frontend framework and document the decision
 - [ ] Document frontend/backend communication and process ownership
 - [ ] Document file-safety requirements and error behavior
-- [ ] Restore the startup-scan test for temporary downloads
 - [ ] Add backend configuration validation and start/stop/status controls
 - [ ] Build the frontend status screen and connect it to the backend
 - [ ] Record a short demo GIF for the README
@@ -86,25 +90,18 @@
 
 
 ## Where I left off
-- macOS autostart and background logging work and are documented.
-- Watching subfolders was verified with a sample file.
-- Permanent tests cover directory events, .DS_Store, and ordinary files.
-- The startup scan is implemented, tested, and connected to start_watching().
-- All tests passed.
-- on_moved handles files using event.dest_path.
-- Tests for moved files and ignoring moved .DS_Store files pass.
-- Temporary download extensions are skipped by both event handlers and the startup scan.
-- Tests cover temporary downloads and organization after the final rename.
-- The similarly named .DS_Store file test passes.
-
-- Created and moved files now wait for stability before organization.
-- All 27 tests pass.
-- Startup scanning still moves existing files immediately.
-- Watcher and test changes committed as 7c8dc3a.
+- Startup, created, and moved files now share the readiness queue.
+- Temporary downloads and metadata are skipped; duplicate pending paths are combined.
+- Missing files are removed from pending work, and failed moves are retried.
+- All 31 automated tests passed at this checkpoint.
+- A manual background-service test kept a file in source during repeated writes,
+  then moved it with all five lines intact.
+- Architecture documentation now reflects queued processing and its limitations.
+- Commit 7c8dc3a contains the earlier event-queue work; this integration stage
+  still needs to be committed.
 
 ## Next session
-- Change the startup scan to queue existing files.
-- Update the startup-scan test for delayed organization.
-- Restore startup coverage for temporary downloads.
-- Test duplicate events, disappearing files, and retries after move failures.
-- Run the full suite before restarting and manually testing the service.
+- Review and commit the startup-readiness integration, tests, and documentation.
+- Choose the frontend framework and document the decision.
+- Define frontend/backend communication and process ownership.
+- Document file-safety requirements before implementing frontend controls.

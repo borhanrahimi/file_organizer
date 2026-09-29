@@ -1,5 +1,5 @@
 from watchdog.events import DirCreatedEvent, FileCreatedEvent, FileMovedEvent
-from organizer.watcher import DownloadHandler, organize_existing_files  
+from organizer.watcher import DownloadHandler, queue_existing_files
 from organizer.readiness import FileReadinessTracker
 
 def test_handler_ignores_directories(tmp_path):
@@ -86,14 +86,54 @@ def test_scan_organizes_existing_files(tmp_path):
         "Images": [".webp"],
         "Documents": [".txt"],
     }
+    
+    now = [0.0]
+    readiness = FileReadinessTracker(clock=lambda: now[0])
+    handler = DownloadHandler(
+        destination,
+        categories,
+        readiness=readiness,
+    )
 
-    organize_existing_files(source, destination, categories)
+    queue_existing_files(source, handler)
+    # Scanning must only queue files.
+    assert photo.exists()
+    assert document.exists()
+    assert not destination.exists()
+
+    handler.process_pending()
+    assert photo.exists()
+    assert document.exists()
+    assert not destination.exists()
+
+    now[0] = 3.0
+    handler.process_pending()
 
     assert (destination / "Images" / "Old_Photo.webp").read_text() == "photo content"
     assert (destination / "Documents" / "Old_Notes.txt").read_text() == "notes content"
     assert not photo.exists()
     assert not document.exists()
     assert metadata.exists()
+    assert not handler.pending
+
+
+def test_scan_skips_temporary_downloads(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    filenames = ["photo.webp.crdownload", "report.pdf.part",
+                 "video.mp4.download", "image.png.CRDOWNLOAD"]
+    for filename in filenames:
+        (source / filename).write_text("unfinished content")
+
+    destination = tmp_path / "organized"
+    handler = DownloadHandler(destination, {})
+
+    queue_existing_files(source, handler)
+
+    assert handler.incoming.empty()
+    assert not destination.exists()
+    for filename in filenames:
+        assert (source / filename).read_text() == "unfinished content"
 
 def test_handler_organizes_moved_file(tmp_path):
     old_path = tmp_path / "old photo.webp"
@@ -257,5 +297,134 @@ def test_pending_file_waits_until_stable(tmp_path):
 
     organized_file = destination / "Images" / "Holiday_Photo.webp"
     assert organized_file.read_bytes() == b"complete photo content"
+    assert not source_file.exists()
+    assert not handler.pending
+
+def test_duplicate_events_organize_file_once(tmp_path):
+    source_file = tmp_path / "photo.webp"
+    source_file.write_text("photo content")
+    destination = tmp_path / "organized"
+
+    now = [0.0]
+    readiness = FileReadinessTracker(clock=lambda: now[0])
+    handler = DownloadHandler(
+        destination,
+        {"Images": [".webp"]},
+        readiness=readiness,
+    )
+
+    # The startup scan and an event report the same file.
+    handler.queue_file(source_file)
+    handler.on_created(FileCreatedEvent(str(source_file)))
+    handler.process_pending()
+
+    assert source_file.exists()
+    assert len(handler.pending) == 1
+
+    now[0] = 3.0
+    handler.process_pending()
+
+    # A delayed duplicate event arrives after the file moved.
+    handler.on_created(FileCreatedEvent(str(source_file)))
+    handler.process_pending()
+
+    organized_file = destination / "Images" / "Photo.webp"
+    assert organized_file.read_text() == "photo content"
+    assert list((destination / "Images").iterdir()) == [organized_file]
+    assert not source_file.exists()
+    assert not handler.pending
+
+def test_disappearing_file_is_removed_from_pending(tmp_path):
+    source_file = tmp_path / "photo.webp"
+    source_file.write_text("photo content")
+    destination = tmp_path / "organized"
+
+    now = [0.0]
+    readiness = FileReadinessTracker(clock=lambda: now[0])
+    handler = DownloadHandler(
+        destination,
+        {"Images": [".webp"]},
+        readiness=readiness,
+    )
+
+    handler.queue_file(source_file)
+    handler.process_pending()
+
+    assert len(handler.pending) == 1
+
+    # Simulate the user deleting the file while it waits.
+    source_file.unlink()
+
+    now[0] = 3.0
+    handler.process_pending()
+
+    assert not handler.pending
+    assert not destination.exists()
+
+    # A new file at the same path must wait again.
+    source_file.write_text("replacement content")
+    handler.queue_file(source_file)
+    handler.process_pending()
+
+    assert source_file.exists()
+    assert not destination.exists()
+
+    now[0] = 6.0
+    handler.process_pending()
+
+    organized_file = destination / "Images" / "Photo.webp"
+    assert organized_file.read_text() == "replacement content"
+    assert not source_file.exists()
+    assert not handler.pending
+
+def test_failed_move_is_retried(tmp_path, monkeypatch):
+    from organizer import watcher
+
+    source_file = tmp_path / "photo.webp"
+    source_file.write_text("photo content")
+    destination = tmp_path / "organized"
+
+    now = [0.0]
+    readiness = FileReadinessTracker(clock=lambda: now[0])
+    handler = DownloadHandler(
+        destination,
+        {"Images": [".webp"]},
+        readiness=readiness,
+    )
+
+    real_organize_file = watcher.organize_file
+    attempts = []
+
+    def fail_once(filepath, destination_root, categories):
+        attempts.append(filepath)
+        if len(attempts) == 1:
+            raise PermissionError("Simulated temporary failure")
+        real_organize_file(filepath, destination_root, categories)
+
+    monkeypatch.setattr(watcher, "organize_file", fail_once)
+
+    handler.queue_file(source_file)
+    handler.process_pending()
+
+    # The first move attempt fails.
+    now[0] = 3.0
+    handler.process_pending()
+
+    assert len(attempts) == 1
+    assert source_file.exists()
+    assert len(handler.pending) == 1
+    assert not destination.exists()
+
+    # A failure resets readiness, so a fresh waiting period begins.
+    now[0] = 4.0
+    handler.process_pending()
+    assert len(attempts) == 1
+
+    now[0] = 7.0
+    handler.process_pending()
+
+    organized_file = destination / "Images" / "Photo.webp"
+    assert len(attempts) == 2
+    assert organized_file.read_text() == "photo content"
     assert not source_file.exists()
     assert not handler.pending
