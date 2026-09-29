@@ -45,9 +45,13 @@
 - [x] Test duplicate events, disappearing files, and retries after move failures
 - [x] Verify readiness behavior with 31 tests and a manual background-service check
 - [x] Document queued processing and readiness limitations in architecture.md
+- [x] Validate config.yaml at startup with clear ConfigError messages
+- [x] Reject a watch folder that is the same as, or inside, the destination
+- [x] Test missing, empty, and invalid configs plus a valid config (38 tests pass)
 
 
 ## Next
+- [ ] Add backend start/stop/status controls
 - [ ] Choose the frontend framework and document the decision
 - [ ] Document frontend/backend communication and process ownership
 - [ ] Document file-safety requirements and error behavior
@@ -90,15 +94,8 @@
 
 
 ## Where I left off
-- Startup, created, and moved files now share the readiness queue.
-- Temporary downloads and metadata are skipped; duplicate pending paths are combined.
-- Missing files are removed from pending work, and failed moves are retried.
-- All 31 automated tests passed at this checkpoint.
-- A manual background-service test kept a file in source during repeated writes,
-  then moved it with all five lines intact.
-- Architecture documentation now reflects queued processing and its limitations.
-- Commit 7c8dc3a contains the earlier event-queue work; this integration stage
-  still needs to be committed.
+- Config validation added in config.py; __main__.py exits cleanly on bad config.
+- All 38 automated tests pass.
 
 ## Next session
 - Review and commit the startup-readiness integration, tests, and documentation.

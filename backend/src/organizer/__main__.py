@@ -1,7 +1,7 @@
 import logging
+import sys
 
-import yaml
-
+from organizer.config import ConfigError, load_config
 from organizer.watcher import start_watching
 
 def main():
@@ -9,12 +9,12 @@ def main():
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
     )
-    with open("config.yaml") as f:
-        config = yaml.safe_load(f)
 
-    watch_folder = config["watch_folder"]
-    destination_root = config["destination_root"]
-    categories = config["categories"]
+    try:
+        watch_folder, destination_root, categories = load_config("config.yaml")
+    except ConfigError as error:
+        print(f"Config error: {error}", file=sys.stderr)
+        sys.exit(1)
 
     start_watching(watch_folder, destination_root, categories)
 
