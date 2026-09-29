@@ -3,7 +3,8 @@
 ## Current status and structure
 
 The Python backend runs from the terminal or a macOS LaunchAgent. The frontend
-is planned; its framework and communication method have not been selected.
+is planned as a cross-platform Tauri desktop app; its communication method with
+the backend has not been selected.
 
 - `backend/src/organizer/` contains application startup, file operations,
   filesystem watching, and readiness tracking.
@@ -13,10 +14,15 @@ is planned; its framework and communication method have not been selected.
 
 ## Configuration and startup
 
-`__main__.py` configures logging and reads `config.yaml` from the working
-directory. Run from the repository root. The source folder, destination folder,
+`__main__.py` configures logging and loads `config.yaml` from the working
+directory through `load_config()` in `config.py`. Run from the repository root. The source folder, destination folder,
 and categories come from configuration; there is no automatic Downloads default.
 Local `config.yaml` is excluded from Git; `config.example.yaml` is the template.
+
+`load_config()` raises `ConfigError` for a missing or invalid file, missing
+settings, a watch folder that does not exist, a watch folder that is the same as
+or inside the destination, and extensions that do not start with a dot.
+`__main__.py` prints the message and exits with status 1.
 
 ## Processing flow
 
@@ -73,7 +79,8 @@ the final check and the move.
 
 ### File operations: core.py
 
-- `get_category()` selects a category by extension, falling back to `Others`.
+- `get_category()` selects the category whose extension the filename ends with,
+  preferring the longest match (`.tar.gz` over `.gz`) and falling back to `Others`.
 - `clean_filename()` adjusts capitalization, spaces, and parentheses.
 - `unique_path()` chooses a numbered alternative if the destination exists.
 - `organize_file()` creates the category folder, moves the file, and logs success.
@@ -95,6 +102,31 @@ The backend will own file operations, validation, readiness, and watcher state.
 The interface, process ownership, duplicate-instance protection, and behavior
 when closing the UI still need design and implementation.
 
+Before implementation, document:
+
+- Supported requests and responses.
+- Error formats.
+- How status updates reach the frontend.
+- Which process owns the watcher.
+- Whether closing the frontend leaves the organizer running.
+- How the existing LaunchAgent fits into the desktop application.
+- How duplicate organizer instances are prevented.
+
+### Safety requirements: planned work
+
+These requirements are not all implemented yet:
+
+- Validate source and destination folders and reject unsafe overlap.
+- Prevent category paths from escaping the destination.
+- Handle files still being written, including retries.
+- Recover from permission errors and disappearing files.
+- Prevent duplicate watcher instances.
+- Define collision behavior under concurrent file operations.
+- Limit file access to the locations needed by the application.
+- Avoid executing shell commands constructed from user input.
+
+The backend must enforce these rules even when requests come from the frontend.
+
 ## Validation
 
 Run from the repository root:
@@ -103,9 +135,10 @@ Run from the repository root:
 python3 -m pytest backend/test -v
 ```
 
-At the readiness integration checkpoint, all 31 automated tests passed.
-Coverage includes startup files, temporary downloads, created and moved files,
-changing files, duplicate events, disappearing files, and retrying a failed move.
+All 41 automated tests pass. Coverage includes startup files, temporary
+downloads, created and moved files, changing files, duplicate events,
+disappearing files, retrying a failed move, configuration errors, and
+multi-part extensions.
 
 A manual background-service check wrote five lines over five seconds. The file
 remained in source during writing, then appeared in `organized/Documents` with
@@ -117,8 +150,9 @@ all five lines intact. This verifies that scenario, not every download pattern.
 - Pending work is held in memory; a restart reconstructs it through the scan.
 - Persistent move failures can be retried indefinitely; retry limits and backoff
   are not implemented.
-- Configuration validation, duplicate-instance prevention, and comprehensive
-  scan/event error recovery remain future work.
-- Compound extensions such as `.tar.gz` and awkward title-casing remain unresolved.
+- Duplicate-instance prevention and comprehensive scan/event error recovery
+  remain future work.
+- `clean_filename()` treats only the last extension as the extension, so
+  `backup.tar.gz` becomes `Backup.Tar.gz`; title-casing can also be awkward.
 
 See the [roadmap](../ROADMAP.md) for completed work and next steps.
