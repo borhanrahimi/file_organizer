@@ -94,11 +94,15 @@
 
 
 ## Where I left off
-- Config validation added in config.py; __main__.py exits cleanly on bad config.
-- All 38 automated tests pass.
+- Backend: config validation (config.py) and .tar.gz sorting are done; 41 tests pass.
+- Docs live in root docs/; decisions are in docs/decisions/.
+- Frontend: Tauri 2 + React + TypeScript chosen (ADR 001) and scaffolded in
+  frontend/. `npm run tauri dev` opens the template window.
+- Communication design is written (ADR 002): Tauri starts the Python backend,
+  which serves a token-protected HTTP API on 127.0.0.1.
 
 ## Next session
-- Review and commit the startup-readiness integration, tests, and documentation.
-- Choose the frontend framework and document the decision.
-- Define frontend/backend communication and process ownership.
-- Document file-safety requirements before implementing frontend controls.
+- Start a fresh conversation and point it at ROADMAP.md and ADR 002.
+- Install FastAPI and Uvicorn; build a minimal `GET /status` endpoint with a test.
+- Make the watcher loop stoppable from another thread, then add
+  `POST /start` and `POST /stop`.
