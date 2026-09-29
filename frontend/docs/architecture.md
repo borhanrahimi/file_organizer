@@ -58,14 +58,22 @@ Unknown extensions are placed in Others.
 
 ### Filesystem handling: watcher.py
 
-- Scan existing files at startup, including subfolders.
-- Watch recursively for newly created and moved files.
-- Use the destination path when processing move events.
-- Ignore directory events and the exact filename .DS_Store.
-- Skip .crdownload, .part, and .download extensions.
-- Exclude the destination folder from the startup scan.
-
+- Start observing before scanning existing files.
+- Queue eligible startup, created, and moved files.
+- Combine duplicate pending paths.
+- Check pending files once per second.
+- Move files after their signature stays unchanged for three seconds.
+- Remove missing files from pending work.
+- Log move failures and retry after a fresh stability check.
 The startup scan completes before live watching begins.
+
+### File readiness: readiness.py
+
+Tracks file identity, size, and modification time.
+A detected change restarts the three-second stability period.
+
+An unchanged signature is a readiness signal, not proof that writing
+has finished. A paused download may resume later.
 
 ## Current processing flow
 
