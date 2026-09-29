@@ -3,14 +3,20 @@ from pathlib import Path
 import logging
 
 
-# TODO: Path().suffix only grabs the last extension, so "file.tar.gz" becomes
-# ".gz" not ".tar.gz" and won't match the Archives category correctly.
+# Matches by the end of the filename so multi-part extensions like ".tar.gz"
+# work. The longest matching extension wins, so ".tar.gz" beats ".gz".
 def get_category(filename, categories):
-    extension = Path(filename).suffix.lower()
+    name = Path(filename).name.lower()
+    best_category = "Others"
+    best_length = 0
+
     for category, extensions in categories.items():
-        if extension in extensions:
-            return category
-    return "Others"
+        for extension in extensions:
+            if name.endswith(extension.lower()) and len(extension) > best_length:
+                best_category = category
+                best_length = len(extension)
+
+    return best_category
 
 # TODO: .title() capitalizes small words like "at"/"pm" oddly (e.g. "_At_11.42.53_Pm").
 # Good enough for v1 — revisit if it becomes annoying.

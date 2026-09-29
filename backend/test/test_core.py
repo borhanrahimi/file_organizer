@@ -5,6 +5,18 @@ TEST_CATEGORIES = {
     "Documents": [".pdf", ".docx"],
 }
 
+def test_get_category_multi_part_extension():
+    categories = {"Archives": [".zip", ".tar.gz"]}
+    assert get_category("backup.tar.gz", categories) == "Archives"
+
+def test_get_category_plain_gz_does_not_match_tar_gz():
+    categories = {"Archives": [".tar.gz"]}
+    assert get_category("notes.gz", categories) == "Others"
+
+def test_get_category_longest_extension_wins():
+    categories = {"Compressed": [".gz"], "Archives": [".tar.gz"]}
+    assert get_category("backup.tar.gz", categories) == "Archives"
+
 def test_sanity():
     assert 1+1 == 2
 

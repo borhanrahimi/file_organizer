@@ -48,6 +48,7 @@
 - [x] Validate config.yaml at startup with clear ConfigError messages
 - [x] Reject a watch folder that is the same as, or inside, the destination
 - [x] Test missing, empty, and invalid configs plus a valid config (38 tests pass)
+- [x] Sort multi-part extensions like .tar.gz correctly (longest match wins; 41 tests pass)
 
 
 ## Next
@@ -69,9 +70,8 @@
 ## Known limitations
 - A file remaining unchanged for three seconds does not guarantee writing
   has finished; a paused download may resume later.
-- `Path(filename).suffix` only grabs the last extension, so `backup.tar.gz` becomes
-  `.gz`, not `.tar.gz`, and won't match the Archives category correctly. Needs a
-  special case for multi-part extensions.
+- `clean_filename()` still treats only the last extension as the extension, so
+  `backup.tar.gz` is renamed `Backup.Tar.gz`. Cosmetic; it is sorted correctly.
 - `.title()` capitalizes small words oddly in some cases (e.g. `_At_`, `_Pm_` in
   timestamps, `Don'T` for words with apostrophes). Cosmetic, not fixed yet.
 
