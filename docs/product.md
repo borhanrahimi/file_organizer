@@ -19,6 +19,8 @@ File-readiness checks and other safety improvements remain unfinished.
 - Display the configured file categories.
 - Show recent successful moves and errors.
 - Open the destination folder in Finder.
+- Cross-platform support.
+
 
 ## First-time setup
 
@@ -53,7 +55,6 @@ These are requirements, not claims that all protections exist today.
 - Undo and restore history.
 - Multiple watched folders.
 - Editing category rules through the interface.
-- Cross-platform support.
 - Cloud synchronization.
 
 ## First-version completion criteria
