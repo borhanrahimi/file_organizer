@@ -3,3 +3,5 @@ Name: file-organizer
 Version: 0.1.0
 Requires-Dist: watchdog
 Requires-Dist: PyYAML
+Requires-Dist: fastapi
+Requires-Dist: uvicorn

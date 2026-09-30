@@ -6,7 +6,11 @@ src/file_organizer.egg-info/requires.txt
 src/file_organizer.egg-info/top_level.txt
 src/organizer/__init__.py
 src/organizer/__main__.py
+src/organizer/config.py
 src/organizer/core.py
+src/organizer/readiness.py
 src/organizer/watcher.py
+test/test_config.py
 test/test_core.py
+test/test_readiness.py
 test/test_watcher.py

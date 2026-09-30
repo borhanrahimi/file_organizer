@@ -1,2 +1,4 @@
 watchdog
 PyYAML
+fastapi
+uvicorn
