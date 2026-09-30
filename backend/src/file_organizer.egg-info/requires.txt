@@ -1,4 +1,0 @@
-watchdog
-PyYAML
-fastapi
-uvicorn
