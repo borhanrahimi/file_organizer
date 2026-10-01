@@ -52,10 +52,20 @@
 - [x] Choose Tauri + React + TypeScript for the frontend (ADR 001)
 - [x] Scaffold the Tauri app in frontend/
 - [x] Design frontend/backend communication and process ownership (ADR 002)
-
+- [x] Add FastAPI and Uvicorn; stop tracking generated egg-info files
+- [x] Add GET /status (hardcoded "stopped" for now) with a test
+- [x] Require a bearer token on every request; 401 in the ADR error format
+- [x] Add server entry point: port from --port, token from ORGANIZER_TOKEN (46 tests pass)
+- [x] Make the watcher loop stoppable with a threading.Event (47 tests pass)
 
 ## Next
-- [ ] Add the backend HTTP API with start/stop/status (see ADR 002)
+- [ ] Add a service that owns the watcher thread; POST /start and POST /stop
+- [ ] Make GET /status report the real state (running / stopped / error)
+- [ ] Prevent duplicate organizers with a lock file (409 on /start)
+- [ ] Record moves and errors in memory; GET /activity
+- [ ] GET /settings and PUT /settings (409 while running)
+- [ ] POST /shutdown
+- [ ] Document api.py and server.py in architecture.md
 - [ ] Document file-safety requirements and error behavior
 - [ ] Build the frontend status screen and connect it to the backend
 - [ ] Record a short demo GIF for the README
@@ -74,6 +84,8 @@
   `backup.tar.gz` is renamed `Backup.Tar.gz`. Cosmetic; it is sorted correctly.
 - `.title()` capitalizes small words oddly in some cases (e.g. `_At_`, `_Pm_` in
   timestamps, `Don'T` for words with apostrophes). Cosmetic, not fixed yet.
+- The token check also blocks FastAPI's /docs page.
+- GET /status is hardcoded to "stopped" until the watcher can be started from the API.
 
 ## Decisions made along the way
 - Unknown file extensions fall back to an "Others" category rather than being
@@ -87,6 +99,11 @@
   anything truthy. Every real test compares against a specific, verified
   expected value.
 
+- A test can also pass for the wrong reason. The missing-token test passed
+  only because a host typo made uvicorn exit with the same code. Tests now
+  check *what* failed (the error message), and thread tests first assert the
+  thread is running, since a crash in a thread doesn't fail the test.
+
 - Successful moves are logged after shutil.move() completes, recording the
   timestamp, original path, and destination path.
 - Logging currently writes to standard error. When run through the
@@ -94,15 +111,10 @@
 
 
 ## Where I left off
-- Backend: config validation (config.py) and .tar.gz sorting are done; 41 tests pass.
-- Docs live in root docs/; decisions are in docs/decisions/.
-- Frontend: Tauri 2 + React + TypeScript chosen (ADR 001) and scaffolded in
-  frontend/. `npm run tauri dev` opens the template window.
-- Communication design is written (ADR 002): Tauri starts the Python backend,
-  which serves a token-protected HTTP API on 127.0.0.1.
+- Backend API: /status, token check, server entry point, and a stoppable
+  watcher loop are done (47 tests).
+- Run it with: ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
 
 ## Next session
-- Start a fresh conversation and point it at ROADMAP.md and ADR 002.
-- Install FastAPI and Uvicorn; build a minimal `GET /status` endpoint with a test.
-- Make the watcher loop stoppable from another thread, then add
-  `POST /start` and `POST /stop`.
+- Step 5: a service class (service.py) that owns the watcher thread, test first.
+- Then POST /start and POST /stop, and make GET /status report the real state.
