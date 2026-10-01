@@ -1,5 +1,8 @@
+import threading
+import time
+
 from watchdog.events import DirCreatedEvent, FileCreatedEvent, FileMovedEvent
-from organizer.watcher import DownloadHandler, queue_existing_files
+from organizer.watcher import DownloadHandler, queue_existing_files, start_watching
 from organizer.readiness import FileReadinessTracker
 
 def test_handler_ignores_directories(tmp_path):
@@ -428,3 +431,23 @@ def test_failed_move_is_retried(tmp_path, monkeypatch):
     assert organized_file.read_text() == "photo content"
     assert not source_file.exists()
     assert not handler.pending
+
+def test_watcher_stops_when_stop_event_is_set(tmp_path):
+    watch_folder = tmp_path / "downloads"
+    watch_folder.mkdir()
+    destination = tmp_path / "organized"
+    stop_event = threading.Event()
+
+    thread = threading.Thread(
+        target=start_watching,
+        args=(str(watch_folder), destination, {"Images": [".jpg"]}),
+        kwargs={"stop_event": stop_event},
+    )
+    thread.start()
+    time.sleep(0.2)
+    assert thread.is_alive()
+
+    stop_event.set()
+    thread.join(timeout=2)
+
+    assert not thread.is_alive()

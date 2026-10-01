@@ -1,11 +1,14 @@
-import time 
-from queue import Empty, Queue
 import logging
-from organizer.readiness import FileReadinessTracker
+import threading
 from pathlib import Path
-from watchdog.observers import Observer
+from queue import Empty, Queue
+
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 from organizer.core import organize_file
+from organizer.readiness import FileReadinessTracker
+
 
 TEMP_DOWNLOAD_EXTENSIONS = {".crdownload", ".part", ".download"}
 
@@ -82,7 +85,9 @@ def queue_existing_files(watch_folder, handler):
     for filepath in Path  (watch_folder).rglob("*"):
         handler.queue_file(filepath)
 
-def start_watching(watch_folder, destination_root, categories):
+def start_watching(watch_folder, destination_root, categories, stop_event=None):
+    if stop_event is None:
+        stop_event = threading.Event()
     handler = DownloadHandler(destination_root, categories)
 
     observer = Observer()
@@ -93,9 +98,9 @@ def start_watching(watch_folder, destination_root, categories):
         queue_existing_files(watch_folder, handler)
         print(f"Watching folder: {watch_folder}...")
 
-        while True:
+        while not stop_event.is_set():
             handler.process_pending()
-            time.sleep(1)
+            stop_event.wait(1)
     except KeyboardInterrupt:
         pass
     finally:
