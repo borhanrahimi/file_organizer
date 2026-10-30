@@ -114,7 +114,7 @@ against concurrent writers.
 Successful moves record source and destination paths. Pending-file operation
 failures include exception details. Python logging uses standard error, so
 successful move messages also appear in the LaunchAgent's error log.
-See the [README](../README.md) for service and log commands.
+See [macos-launchagent.md](macos-launchagent.md) for service and log commands.
 
 ## Server mode
 

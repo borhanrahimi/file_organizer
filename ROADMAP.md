@@ -73,7 +73,7 @@
 - [x] CI also type-checks and builds the frontend
 
 ## Next
-- [ ] Record a short demo GIF for the README
+- [x] Record a short demo GIF for the README
 - [ ] Manually check the app end to end: choose folders, start, drop files in,
       stop, quit (confirm no `organizer.server` process is left)
 - [ ] Package the backend as a sidecar (PyInstaller) so the app works without
@@ -137,4 +137,4 @@
 - Run the API on its own with: ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
 
 ## Next session
-- Record the demo GIF, then decide on Stage 2 (tray icon) vs. packaging the sidecar.
+- Decide on Stage 2 (tray icon) vs. packaging the sidecar.

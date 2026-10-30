@@ -1,44 +1,116 @@
 # File Organizer
 
-A background tool that watches a folder (like Downloads) in real time and
-automatically sorts new files into category subfolders, cleans up messy
-filenames, and never overwrites anything. Use it from a small desktop app or
-from the terminal.
+[![Tests](https://github.com/borhanrahimi/file_organizer/actions/workflows/tests.yaml/badge.svg)](https://github.com/borhanrahimi/file_organizer/actions/workflows/tests.yaml)
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![Tauri](https://img.shields.io/badge/Tauri-2-orange)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-<!-- Demo GIF goes here once recorded -->
-<!-- ![demo](docs/demo.gif) -->
+A desktop app that keeps your Downloads folder tidy on its own. It watches a
+folder in real time, waits until each file has finished downloading, cleans
+up the file's name, and moves it into a category folder (Images, Documents,
+Videos and so on). It never overwrites anything.
 
-## What it does
+<p align="center">
+  <img src="docs/demo.gif" alt="File Organizer sorting six new downloads into category folders" width="600">
+</p>
 
-- Watches a folder in real time (using `watchdog`) instead of polling
-- Sorts files into category folders — Images, Documents, Videos, Music,
-  Archives — fully configurable, not hardcoded
-- Cleans up filenames (e.g. `final_report FINAL (2).docx` -> `Final_Report_Final_2.docx`)
-- Never overwrites files — if a name is already taken, it adds a numbered
-  suffix (`report_1.pdf`, `report_2.pdf`, ...) instead of destroying anything
-- Configured entirely through a `config.yaml` file — no code editing needed
-  to change which folder is watched or what counts as which category
-- Desktop app (Tauri + React) to choose folders, start and stop the
-  organizer, and see recent moves and errors
-- Only one organizer runs at a time — the app, the terminal, and the
-  LaunchAgent share a lock
+```text
+Downloads/                              Organized/
+  final_report FINAL (2).docx    ──►      Documents/Final_Report_Final_2.docx
+  IMG 2041.PNG                   ──►      Images/Img_2041.PNG
+  backup.tar.gz                  ──►      Archives/Backup.Tar.gz
+  movie.mp4.crdownload           (skipped until the download finishes)
+```
 
-## Why
+## Features
 
-Downloads folders are one of the messiest, most neglected parts of a
-computer. This project applies a small, well-tested piece of automation to a
-real everyday problem, rather than being a toy exercise.
+- **Real-time watching** of a folder and its subfolders using filesystem
+  events (`watchdog`), not polling. Files already there are sorted at startup.
+- **Waits for downloads to finish.** Partial downloads (`.crdownload`,
+  `.part`) are skipped, and a file is moved only after it has stopped
+  changing for 3 seconds.
+- **Never loses data.** If a name is taken, it uses `report_1.pdf`,
+  `report_2.pdf`, and so on instead of overwriting. Failed moves are retried
+  and reported.
+- **Configurable categories,** including multi-part extensions like `.tar.gz`.
+  Unknown types go to `Others`.
+- **Desktop app** (Tauri + React) to choose folders, start and stop the
+  organizer, and see recent moves and errors.
+- **Terminal mode** and an optional macOS LaunchAgent for running at login.
 
-## Install
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.13, FastAPI, Uvicorn, watchdog, PyYAML |
+| Desktop app | Tauri 2 (Rust), React 19, TypeScript, Vite |
+| Testing | pytest (87 tests), Rust unit tests |
+| CI | GitHub Actions: backend tests and frontend type-check/build |
+
+## Architecture
+
+```text
+┌────────────────── Desktop app (Tauri) ──────────────────┐
+│  React UI ── HTTP + token ──┐        Rust: starts and    │
+│  (polls every 2 s)          │        stops the backend   │
+└─────────────────────────────┼────────────────────────────┘
+                              ▼
+┌──────────── Python backend (127.0.0.1 only) ────────────┐
+│  api.py ─► service.py ─► watcher thread                  │
+│                           │  filesystem events            │
+│                           ▼                               │
+│                 readiness check ─► core.py: categorize,   │
+│                                    rename, move           │
+│  activity.py: recent moves/errors   lock.py: one instance │
+└──────────────────────────────────────────────────────────┘
+```
+
+The Tauri app starts the Python backend as a child process, with a free port
+and a random token for each launch. The React interface talks to it over a
+small local HTTP API. Quitting the app shuts the backend down. If the app
+crashes, the backend notices and exits on its own.
+
+More detail:
+- [Architecture](docs/architecture.md): components, API, error codes, and
+  file-safety rules.
+- Design decisions: [why Tauri](docs/decisions/001-frontend-framework.md)
+  and [how the app talks to the backend](docs/decisions/002-frontend-backend-communication.md).
+- [Product plan](docs/product.md): scope and user flows.
+
+## Engineering highlights
+
+- **Safety first.** The backend checks every setting before it starts. It
+  refuses a source folder inside the destination, and category names that
+  could write outside it (`../x`). Settings files are written atomically, and
+  a check that a file has stopped changing guards against moving half-written
+  downloads.
+- **Concurrency.** The watcher runs on a background thread and can be stopped
+  safely: stopping lets a move that has already started finish. Shared state
+  is protected by locks. An operating-system file lock ensures that only one
+  organizer runs at a time across the app, the terminal, and the LaunchAgent,
+  and it can't go stale after a crash.
+- **Local API security.** The API listens on `127.0.0.1` only. It requires a
+  bearer token for each launch, compared in constant time, and its CORS
+  allow-list blocks other websites from calling it.
+- **Tested behavior, not just functions.** Tests use an injectable clock,
+  so time-based checks run instantly. Other tests simulate failed moves,
+  duplicate events, and files that disappear. Process-level tests confirm that
+  the server exits on `/shutdown` and when its parent app dies.
+- **Documented decisions.** Architecture decision records (ADRs), a
+  roadmap, and a list of known limitations show the reasoning behind the code.
+
+## Getting started
+
+Requirements: Python 3.10+, and for the desktop app Node.js 20+ and Rust
+([Tauri prerequisites](https://tauri.app/start/prerequisites/)).
 
 ```bash
+git clone https://github.com/borhanrahimi/file_organizer.git
+cd file_organizer
 python3 -m pip install -e ./backend
 ```
 
-## Desktop app
-
-The app needs the backend installed (above), plus Node.js and Rust
-([Tauri prerequisites](https://tauri.app/start/prerequisites/)).
+### Desktop app
 
 ```bash
 cd frontend
@@ -46,180 +118,80 @@ npm install
 npm run tauri dev
 ```
 
-The app starts the Python backend itself, using `python3` (set
-`ORGANIZER_PYTHON` to use a different Python, such as a virtual
-environment's). Choose a source and destination folder, save, and press
-**Start**. Closing the window stops the organizer.
+Choose a source and destination folder, press **Save folders**, then
+**Start**. The app runs the backend with `python3`. To use another
+interpreter, such as a virtual environment's, set `ORGANIZER_PYTHON`.
+Closing the window stops the organizer.
 
-The app keeps its own settings in its app data folder (on macOS,
-`~/Library/Application Support/com.borhan.file-organizer/settings.yaml`), separate
-from `config.yaml`. Stop the LaunchAgent before pressing Start; otherwise the
-app reports that another organizer is already running.
-
-## Configuration
-
-Copy the example config and edit it to match your setup:
+### Terminal
 
 ```bash
-cp config.example.yaml config.yaml
-```
-
-Then edit `config.yaml`:
-
-```yaml
-watch_folder: "/path/to/folder/to/watch"
-destination_root: "/path/to/folder/where/organized/files/go"
-
-categories:
-  Images:
-    - .jpg
-    - .png
-  Documents:
-    - .pdf
-    - .docx
-  # add or edit categories freely — no code changes needed
-```
-
-`config.yaml` is your personal, local configuration and is not tracked by
-git (see `.gitignore`) — only `config.example.yaml` is committed, as a
-template.
-
-## Terminal usage
-
-Run from the project root so the organizer can find `config.yaml`:
-
-```bash
+cp config.example.yaml config.yaml   # then edit the folders and categories
 python3 -m organizer
 ```
 
-It'll print `Watching folder: ...` and run until you stop it with `Ctrl+C`.
-If the desktop app or the LaunchAgent is already organizing, it prints
-`Another file organizer is already running` and exits.
-
-## Background operation on macOS
-
-These commands manage the LaunchAgent named `com.borhan.file-organizer`.
-They assume its configuration has already been saved to
-`~/Library/LaunchAgents/com.borhan.file-organizer.plist`. This personal file
-is outside the repository; installing the Python package does not create it.
-
-The LaunchAgent must use your Python executable with the arguments
-`-u`, `-m`, and `organizer`, set `WorkingDirectory` to your project root,
-and set `RunAtLoad` to `true` to start at login. It reads the same
-`config.yaml` as a manual run.
-
-In the commands below, `$(id -u)` supplies your numeric user ID so
-`launchctl` manages the job in your login session.
-
-### Start and check status
-
-Stop any terminal-run organizer with `Ctrl+C` first, so only one instance
-watches the folder. If the background job is not already loaded, start it:
-
-```bash
-launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.borhan.file-organizer.plist
+```yaml
+watch_folder: "~/Downloads"
+destination_root: "~/Organized"
+categories:
+  Images: [.jpg, .png]
+  Documents: [.pdf, .docx]
+  Archives: [.zip, .tar.gz]
 ```
 
-Check its status:
+To start it automatically at login on macOS, see
+[Running in the background on macOS](docs/macos-launchagent.md).
+
+## Running the tests
 
 ```bash
-launchctl print "gui/$(id -u)/com.borhan.file-organizer"
-```
-
-Look for `state = running`. If the job is not loaded, the status command
-reports that it cannot find the service. If it is loaded but not running,
-check the logs below.
-
-### Stop the current job
-
-```bash
-launchctl bootout "gui/$(id -u)/com.borhan.file-organizer"
-```
-
-This stops and unloads the job. It can still start at your next login.
-Running `bootout` on an already unloaded job reports an error.
-
-### Disable or re-enable autostart
-
-To prevent future startup, disable the job. If it is currently loaded,
-also run `bootout` to stop it now:
-
-```bash
-launchctl disable "gui/$(id -u)/com.borhan.file-organizer"
-launchctl bootout "gui/$(id -u)/com.borhan.file-organizer"
-```
-
-To re-enable autostart:
-
-```bash
-launchctl enable "gui/$(id -u)/com.borhan.file-organizer"
-```
-
-After enabling it, use the `bootstrap` command above to start it immediately
-if it is not loaded, or let it start at your next login.
-
-### Read the logs
-
-With the configured log paths, read startup output and recent move messages
-or errors using:
-
-```bash
-tail -n 20 ~/Library/Logs/file-organizer.log
-tail -n 20 ~/Library/Logs/file-organizer-error.log
-```
-
-Python logging writes to standard error by default, so successful `INFO`
-move messages also appear in `file-organizer-error.log`. Each move entry
-records the timestamp, source path, and destination path. Log files appear
-when the background job starts; if startup fails, check the error log.
-
-## Architecture
-
-Watched folder -> `watchdog` observer -> `organize_file()` -> destination
-folders (deduplicated via `unique_path()`). See `docs/architecture.md` for
-the full breakdown and design decisions.
-
-```text
-Tauri app ──starts──> python -m organizer.server (127.0.0.1, token)
-   React  ──HTTP────> api.py -> service.py -> watcher thread -> core.py
-```
-
-- `core.py` handles categorization, filename cleanup, collision handling, and file moves.
-- `watcher.py` handles filesystem events and the observer loop.
-- `readiness.py` waits until a file stops changing before it is moved.
-- `service.py` owns the watcher thread, its state, and the saved settings.
-- `api.py` is the local HTTP API; `server.py` runs it.
-- `activity.py` keeps the last 100 moves and errors for the app.
-- `lock.py` makes sure only one organizer runs at a time.
-- `__main__.py` configures logging, reads `config.yaml`, and starts the watcher.
-
-## Development
-
-```bash
-python3 -m pip install -e ./backend
 python3 -m pip install pytest httpx
-python3 -m pytest backend/test -v
+python3 -m pytest backend/test -v       # 87 backend tests
+
+cd frontend
+npm run build                           # TypeScript type-check and build
+(cd src-tauri && cargo test)            # app starts/stops the backend
 ```
 
-Run the API on its own and try it with `curl`:
+To try the API by hand:
 
 ```bash
 ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
 curl -H "Authorization: Bearer dev-secret" http://127.0.0.1:8000/status
 ```
 
-Frontend checks:
+## Project structure
 
-```bash
-cd frontend
-npm run build                   # type-check and build the interface
-(cd src-tauri && cargo test)    # needs the backend package installed
+```text
+backend/
+  src/organizer/
+    core.py        categorize, clean names, move without overwriting
+    watcher.py     filesystem events and the processing loop
+    readiness.py   wait until a file stops changing
+    service.py     owns the watcher thread, state, and settings
+    api.py         local HTTP API (FastAPI)
+    server.py      runs the API; exits with its parent app
+    activity.py    last 100 moves and errors
+    lock.py        one organizer at a time
+    config.py      load, validate, and save settings
+  test/            pytest suite
+frontend/
+  src/             React interface and API client
+  src-tauri/       Rust: starts and stops the backend
+docs/              architecture, ADRs, product plan
 ```
 
 ## Roadmap
 
-See `ROADMAP.md` for what's done and what's next.
+The first version is complete. Next up:
+
+- Package the backend with the app so Python isn't required
+- Menu-bar icon that keeps organizing after the window closes
+- Undo history for moves
+- Editing categories in the app
+
+See [ROADMAP.md](ROADMAP.md) for the full history and known limitations.
 
 ## License
 
-MIT
+[MIT](LICENSE)
