@@ -7,9 +7,9 @@ desktop interface, without needing terminal commands for everyday use.
 
 ## Current status
 
-The Python backend is implemented.
-The desktop frontend is planned.
-File-readiness checks and other safety improvements remain unfinished.
+The Python backend, its local HTTP API, and the first version of the desktop
+app are implemented. The app runs from source (`npm run tauri dev`) and needs
+Python with the backend installed; a standalone packaged app is future work.
 
 ## First-version features
 
@@ -18,7 +18,7 @@ File-readiness checks and other safety improvements remain unfinished.
 - Choose one source folder and one destination folder.
 - Display the configured file categories.
 - Show recent successful moves and errors.
-- Open the destination folder in Finder.
+- Show the destination folder in Finder (or the system file manager).
 - Cross-platform support.
 
 
@@ -35,8 +35,8 @@ File-readiness checks and other safety improvements remain unfinished.
 The user can check status, view recent activity, and stop organization.
 
 Stopping prevents new work from starting; an in-progress move may finish.
-Closing the interface and stopping the organizer must have clearly
-documented behavior before implementation.
+Closing the window quits the app and stops the organizer. The window says so
+next to the Start button.
 
 ## Safety expectations
 
@@ -47,7 +47,8 @@ documented behavior before implementation.
 - Show actionable errors without claiming failed operations succeeded.
 - Keep file processing local; no cloud upload is planned.
 
-These are requirements, not claims that all protections exist today.
+See "File-safety requirements" in [architecture.md](architecture.md) for
+how each one is enforced and what is not guaranteed.
 
 ## Deferred features
 

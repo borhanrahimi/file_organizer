@@ -57,18 +57,27 @@
 - [x] Require a bearer token on every request; 401 in the ADR error format
 - [x] Add server entry point: port from --port, token from ORGANIZER_TOKEN (46 tests pass)
 - [x] Make the watcher loop stoppable with a threading.Event (47 tests pass)
+- [x] Add a service that owns the watcher thread; POST /start and POST /stop
+- [x] Make GET /status report the real state (running / stopped / error)
+- [x] Prevent duplicate organizers with a lock file (409 on /start); terminal
+      mode and the LaunchAgent take the same lock
+- [x] Record moves and errors in memory; GET /activity
+- [x] GET /settings and PUT /settings (409 while running); settings saved atomically
+- [x] Reject category names that could escape the destination (`../x`, `a/b`)
+- [x] POST /shutdown; the server also exits if the app that started it dies
+- [x] Document api.py and server.py in architecture.md
+- [x] Document file-safety requirements and error behavior
+- [x] Build the frontend status screen and connect it to the backend
+- [x] Tauri starts the backend with a random port and token, stops it on quit
+      (87 Python tests, 2 Rust tests)
+- [x] CI also type-checks and builds the frontend
 
 ## Next
-- [ ] Add a service that owns the watcher thread; POST /start and POST /stop
-- [ ] Make GET /status report the real state (running / stopped / error)
-- [ ] Prevent duplicate organizers with a lock file (409 on /start)
-- [ ] Record moves and errors in memory; GET /activity
-- [ ] GET /settings and PUT /settings (409 while running)
-- [ ] POST /shutdown
-- [ ] Document api.py and server.py in architecture.md
-- [ ] Document file-safety requirements and error behavior
-- [ ] Build the frontend status screen and connect it to the backend
 - [ ] Record a short demo GIF for the README
+- [ ] Manually check the app end to end: choose folders, start, drop files in,
+      stop, quit (confirm no `organizer.server` process is left)
+- [ ] Package the backend as a sidecar (PyInstaller) so the app works without
+      a Python install
 
 ## Later / optional
 - [ ] AI-based smart naming (reads file content, not just filename)
@@ -85,7 +94,12 @@
 - `.title()` capitalizes small words oddly in some cases (e.g. `_At_`, `_Pm_` in
   timestamps, `Don'T` for words with apostrophes). Cosmetic, not fixed yet.
 - The token check also blocks FastAPI's /docs page.
-- GET /status is hardcoded to "stopped" until the watcher can be started from the API.
+- A file that keeps failing to move adds an error to the activity list on
+  every retry, which can push older events out of the 100-event list.
+- The app needs Python with the backend installed (`ORGANIZER_PYTHON` to pick
+  which Python). Categories can't be edited in the app yet.
+- Exiting when the parent app dies relies on Unix behavior; on Windows a
+  crashed app can leave the backend running until it is ended manually.
 
 ## Decisions made along the way
 - Unknown file extensions fall back to an "Others" category rather than being
@@ -110,11 +124,17 @@
   LaunchAgent, those messages are captured in its configured error log.
 
 
+- The lock is an operating-system lock (flock / msvcrt), not "a file exists"
+  check, so a crash never leaves a stale lock behind.
+- The token goes to the backend in an environment variable, not a
+  command-line argument, because other users can read process arguments.
+- CORS runs before the token check: the browser's preflight request never
+  carries the token, so it would otherwise always get 401.
+
 ## Where I left off
-- Backend API: /status, token check, server entry point, and a stoppable
-  watcher loop are done (47 tests).
-- Run it with: ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
+- Backend API is complete (87 tests) and the desktop app's first version works:
+  `cd frontend && npm run tauri dev`.
+- Run the API on its own with: ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
 
 ## Next session
-- Step 5: a service class (service.py) that owns the watcher thread, test first.
-- Then POST /start and POST /stop, and make GET /status report the real state.
+- Record the demo GIF, then decide on Stage 2 (tray icon) vs. packaging the sidecar.

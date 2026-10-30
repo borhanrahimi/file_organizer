@@ -16,12 +16,13 @@ def is_temporary_file(filepath):
     return Path(filepath).suffix.lower() in TEMP_DOWNLOAD_EXTENSIONS
 
 class DownloadHandler(FileSystemEventHandler):
-    def __init__(self, destination_root, categories, readiness=None):
+    def __init__(self, destination_root, categories, readiness=None, activity=None):
         self.destination_root = destination_root
         self.categories = categories
         self.readiness = (
             readiness if readiness is not None else FileReadinessTracker()
         )
+        self.activity = activity
         self.incoming = Queue()
         self.pending = set()
 
@@ -56,15 +57,20 @@ class DownloadHandler(FileSystemEventHandler):
                     continue
                 if not self.readiness.is_ready(path):
                     continue
-                organize_file(
+                destination = organize_file(
                     path,
                     self.destination_root,
                     self.categories,
                 )
-            except OSError:
+            except OSError as error:
                 logging.exception("Could not organize file: %s", path)
+                if self.activity is not None:
+                    self.activity.record_error(path, f"Could not move file: {error}")
                 self.readiness.forget(path)
                 continue
+
+            if self.activity is not None:
+                self.activity.record_move(path, destination)
 
             self.pending.discard(path)
             self.readiness.forget(path)
@@ -85,10 +91,12 @@ def queue_existing_files(watch_folder, handler):
     for filepath in Path  (watch_folder).rglob("*"):
         handler.queue_file(filepath)
 
-def start_watching(watch_folder, destination_root, categories, stop_event=None):
+def start_watching(
+    watch_folder, destination_root, categories, stop_event=None, activity=None
+):
     if stop_event is None:
         stop_event = threading.Event()
-    handler = DownloadHandler(destination_root, categories)
+    handler = DownloadHandler(destination_root, categories, activity=activity)
 
     observer = Observer()
     observer.schedule(handler, watch_folder, recursive=True)

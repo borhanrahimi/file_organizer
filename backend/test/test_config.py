@@ -1,6 +1,6 @@
 import pytest
 
-from organizer.config import ConfigError, load_config
+from organizer.config import ConfigError, load_config, save_config
 
 
 def write_config(tmp_path, text):
@@ -89,3 +89,46 @@ categories:
     assert watch_folder == str(watch.resolve())
     assert destination_root == str(destination.resolve())
     assert categories == {"Images": [".jpg", ".png"]}
+
+
+
+def test_category_name_with_slash_raises_config_error(tmp_path):
+    watch = tmp_path / "watch"
+    watch.mkdir()
+    config_file = write_config(tmp_path, f"""
+watch_folder: "{watch}"
+destination_root: "{tmp_path / 'organized'}"
+categories:
+  ../Escaped: [.jpg]
+""")
+
+    with pytest.raises(ConfigError, match="plain folder name"):
+        load_config(config_file)
+
+
+def test_empty_watch_folder_raises_config_error(tmp_path):
+    config_file = write_config(tmp_path, f"""
+watch_folder: ""
+destination_root: "{tmp_path / 'organized'}"
+categories:
+  Images: [.jpg]
+""")
+
+    with pytest.raises(ConfigError, match="watch_folder must be a folder path"):
+        load_config(config_file)
+
+
+def test_saved_config_loads_back(tmp_path):
+    watch = tmp_path / "watch"
+    watch.mkdir()
+    destination = tmp_path / "organized"
+    config_file = tmp_path / "app data" / "settings.yaml"
+
+    save_config(config_file, str(watch), str(destination), {"Images": [".jpg"]})
+
+    assert load_config(config_file) == (
+        str(watch.resolve()),
+        str(destination.resolve()),
+        {"Images": [".jpg"]},
+    )
+    assert list(config_file.parent.iterdir()) == [config_file]

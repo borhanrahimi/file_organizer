@@ -2,7 +2,8 @@
 
 A background tool that watches a folder (like Downloads) in real time and
 automatically sorts new files into category subfolders, cleans up messy
-filenames, and never overwrites anything.
+filenames, and never overwrites anything. Use it from a small desktop app or
+from the terminal.
 
 <!-- Demo GIF goes here once recorded -->
 <!-- ![demo](docs/demo.gif) -->
@@ -17,6 +18,10 @@ filenames, and never overwrites anything.
   suffix (`report_1.pdf`, `report_2.pdf`, ...) instead of destroying anything
 - Configured entirely through a `config.yaml` file — no code editing needed
   to change which folder is watched or what counts as which category
+- Desktop app (Tauri + React) to choose folders, start and stop the
+  organizer, and see recent moves and errors
+- Only one organizer runs at a time — the app, the terminal, and the
+  LaunchAgent share a lock
 
 ## Why
 
@@ -29,6 +34,27 @@ real everyday problem, rather than being a toy exercise.
 ```bash
 python3 -m pip install -e ./backend
 ```
+
+## Desktop app
+
+The app needs the backend installed (above), plus Node.js and Rust
+([Tauri prerequisites](https://tauri.app/start/prerequisites/)).
+
+```bash
+cd frontend
+npm install
+npm run tauri dev
+```
+
+The app starts the Python backend itself, using `python3` (set
+`ORGANIZER_PYTHON` to use a different Python, such as a virtual
+environment's). Choose a source and destination folder, save, and press
+**Start**. Closing the window stops the organizer.
+
+The app keeps its own settings in its app data folder (on macOS,
+`~/Library/Application Support/com.borhan.file-organizer/settings.yaml`), separate
+from `config.yaml`. Stop the LaunchAgent before pressing Start; otherwise the
+app reports that another organizer is already running.
 
 ## Configuration
 
@@ -58,7 +84,7 @@ categories:
 git (see `.gitignore`) — only `config.example.yaml` is committed, as a
 template.
 
-## Usage
+## Terminal usage
 
 Run from the project root so the organizer can find `config.yaml`:
 
@@ -67,6 +93,8 @@ python3 -m organizer
 ```
 
 It'll print `Watching folder: ...` and run until you stop it with `Ctrl+C`.
+If the desktop app or the LaunchAgent is already organizing, it prints
+`Another file organizer is already running` and exits.
 
 ## Background operation on macOS
 
@@ -151,16 +179,41 @@ Watched folder -> `watchdog` observer -> `organize_file()` -> destination
 folders (deduplicated via `unique_path()`). See `docs/architecture.md` for
 the full breakdown and design decisions.
 
+```text
+Tauri app ──starts──> python -m organizer.server (127.0.0.1, token)
+   React  ──HTTP────> api.py -> service.py -> watcher thread -> core.py
+```
+
 - `core.py` handles categorization, filename cleanup, collision handling, and file moves.
 - `watcher.py` handles filesystem events and the observer loop.
+- `readiness.py` waits until a file stops changing before it is moved.
+- `service.py` owns the watcher thread, its state, and the saved settings.
+- `api.py` is the local HTTP API; `server.py` runs it.
+- `activity.py` keeps the last 100 moves and errors for the app.
+- `lock.py` makes sure only one organizer runs at a time.
 - `__main__.py` configures logging, reads `config.yaml`, and starts the watcher.
 
 ## Development
 
 ```bash
 python3 -m pip install -e ./backend
-python3 -m pip install pytest
+python3 -m pip install pytest httpx
 python3 -m pytest backend/test -v
+```
+
+Run the API on its own and try it with `curl`:
+
+```bash
+ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
+curl -H "Authorization: Bearer dev-secret" http://127.0.0.1:8000/status
+```
+
+Frontend checks:
+
+```bash
+cd frontend
+npm run build                   # type-check and build the interface
+(cd src-tauri && cargo test)    # needs the backend package installed
 ```
 
 ## Roadmap

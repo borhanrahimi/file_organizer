@@ -43,6 +43,7 @@ def organize_file(filepath, destination_root, categories):
     destination_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(filepath, destination_path)
     logging.info("Moved file: %s -> %s", filepath, destination_path)
+    return destination_path
 
 def unique_path(destination_path):
     if not destination_path.exists():

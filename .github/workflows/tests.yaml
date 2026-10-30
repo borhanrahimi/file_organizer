@@ -26,5 +26,20 @@ jobs:
       - name: Run tests
         run: python -m pytest backend/test -v
 
+  frontend:
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Download code
+        uses: actions/checkout@v6
 
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Type-check and build the interface
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
