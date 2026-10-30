@@ -1,0 +1,57 @@
+name: Release
+
+# Push a tag like v1.0.0 to build the macOS app and attach it to a draft
+# GitHub Release. Review the draft on GitHub, then publish it.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    # Apple silicon. Rust and the GitHub CLI are preinstalled on this runner.
+    runs-on: macos-latest
+
+    steps:
+      - name: Download code
+        uses: actions/checkout@v6
+
+      - name: Check that the tag matches the app version
+        run: |
+          version="v$(python3 -c "import json; print(json.load(open('frontend/src-tauri/tauri.conf.json'))['version'])")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match app version $version in tauri.conf.json"
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build the app and installer
+        working-directory: frontend
+        env:
+          CI: true
+        run: npm run release
+
+      - name: Create a draft release with the installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            frontend/src-tauri/target/release/bundle/dmg/*.dmg \
+            --draft \
+            --title "File Organizer $GITHUB_REF_NAME" \
+            --notes-file .github/release-notes.md

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Packaged backend (npm run build:sidecar)
+build/
+src-tauri/binaries/

@@ -22,6 +22,53 @@ Downloads/                              Organized/
   movie.mp4.crdownload           (skipped until the download finishes)
 ```
 
+**Status:** version 1 is complete. Tested on macOS; Windows and Linux are
+supported in the code but not yet tested by hand.
+
+## Download
+
+**macOS (Apple silicon):** download the `.dmg` from the
+[latest release](https://github.com/borhanrahimi/file_organizer/releases/latest),
+open it, and drag **File Organizer** into Applications. Python is not needed;
+the app includes its own backend.
+
+The app is not signed with a paid Apple developer account, so the first time
+you open it macOS refuses. Go to **System Settings → Privacy & Security**,
+click **Open Anyway** next to the message about File Organizer, and confirm.
+You only need to do this once.
+
+Intel Macs, Windows, and Linux: run from source (see
+[Getting started](#getting-started)).
+
+## Try it in one minute (from source)
+
+You only need Python 3.10+. The demo creates messy sample files in a new
+temporary folder, sorts them, and prints the folder before and after. It
+never touches your real files.
+
+```bash
+git clone https://github.com/borhanrahimi/file_organizer.git
+cd file_organizer
+python3 -m pip install -e ./backend
+python3 -m organizer.demo
+```
+
+```text
+After:
+  Downloads/
+    Movie.mp4.crdownload        <- still downloading, left alone
+  Organized/
+    Documents/
+      Final_Report_Final_2.docx
+      Invoice.pdf
+      Invoice_1.pdf             <- same name: renamed, not overwritten
+    Images/
+      Img_2041.PNG
+    ...
+```
+
+To use it on your own folders, see [Getting started](#getting-started).
+
 ## Features
 
 - **Real-time watching** of a folder and its subfolders using filesystem
@@ -44,8 +91,9 @@ Downloads/                              Organized/
 |---|---|
 | Backend | Python 3.13, FastAPI, Uvicorn, watchdog, PyYAML |
 | Desktop app | Tauri 2 (Rust), React 19, TypeScript, Vite |
-| Testing | pytest (87 tests), Rust unit tests |
-| CI | GitHub Actions: backend tests and frontend type-check/build |
+| Testing | pytest (91 tests), Rust unit tests |
+| Packaging | PyInstaller (backend), Tauri bundler (`.app` / `.dmg`) |
+| CI | GitHub Actions: tests on every push; tagged versions build a release |
 
 ## Architecture
 
@@ -65,7 +113,8 @@ Downloads/                              Organized/
 └──────────────────────────────────────────────────────────┘
 ```
 
-The Tauri app starts the Python backend as a child process, with a free port
+The Tauri app starts the Python backend as a child process (in the
+downloadable app, a single executable built with PyInstaller), with a free port
 and a random token for each launch. The React interface talks to it over a
 small local HTTP API. Quitting the app shuts the backend down. If the app
 crashes, the backend notices and exits on its own.
@@ -142,11 +191,24 @@ categories:
 To start it automatically at login on macOS, see
 [Running in the background on macOS](docs/macos-launchagent.md).
 
+### Building the downloadable app
+
+```bash
+cd frontend
+npm run release
+```
+
+This packages the backend with PyInstaller (in its own virtual environment)
+and builds `src-tauri/target/release/bundle/dmg/File Organizer_<version>_aarch64.dmg`.
+To publish, set `"version"` in `frontend/src-tauri/tauri.conf.json`, commit,
+and push a matching tag (for example `v1.0.0`). GitHub Actions builds the
+`.dmg` and attaches it to a draft release for you to review and publish.
+
 ## Running the tests
 
 ```bash
 python3 -m pip install pytest httpx
-python3 -m pytest backend/test -v       # 87 backend tests
+python3 -m pytest backend/test -v       # 91 backend tests
 
 cd frontend
 npm run build                           # TypeScript type-check and build
@@ -174,10 +236,12 @@ backend/
     activity.py    last 100 moves and errors
     lock.py        one organizer at a time
     config.py      load, validate, and save settings
+    demo.py        try it on sample files
   test/            pytest suite
 frontend/
   src/             React interface and API client
   src-tauri/       Rust: starts and stops the backend
+  scripts/         packages the backend for the release app
 docs/              architecture, ADRs, product plan
 ```
 
@@ -185,7 +249,6 @@ docs/              architecture, ADRs, product plan
 
 The first version is complete. Next up:
 
-- Package the backend with the app so Python isn't required
 - Menu-bar icon that keeps organizing after the window closes
 - Undo history for moves
 - Editing categories in the app

@@ -71,20 +71,25 @@
 - [x] Tauri starts the backend with a random port and token, stops it on quit
       (87 Python tests, 2 Rust tests)
 - [x] CI also type-checks and builds the frontend
+- [x] Record a short demo GIF for the README
+- [x] `python3 -m organizer.demo`: try it on sample files with no setup (91 tests)
+- [x] Recruiter-friendly README: "Try it" section, status line, highlights
+- [x] Package the backend with PyInstaller as a Tauri sidecar; the app no
+      longer needs Python (`npm run release` builds the .dmg)
+- [x] Release workflow: a version tag builds the .dmg into a draft GitHub Release
+- [x] App icon
 
 ## Next
-- [x] Record a short demo GIF for the README
 - [ ] Manually check the app end to end: choose folders, start, drop files in,
       stop, quit (confirm no `organizer.server` process is left)
-- [ ] Package the backend as a sidecar (PyInstaller) so the app works without
-      a Python install
+- [ ] Set the version, push a tag, and publish the first GitHub Release
+- [ ] Write a short "What I learned" section for the README
 
 ## Later / optional
 - [ ] AI-based smart naming (reads file content, not just filename)
 - [ ] Tray/menu-bar app instead of a background script
 - [ ] Undo/history so a bad auto-move is reversible
 - [ ] Build a macOS menu-bar interface with start/stop controls
-- [ ] Package the organizer as a standalone macOS .app
 
 ## Known limitations
 - A file remaining unchanged for three seconds does not guarantee writing
@@ -96,10 +101,11 @@
 - The token check also blocks FastAPI's /docs page.
 - A file that keeps failing to move adds an error to the activity list on
   every retry, which can push older events out of the 100-event list.
-- The app needs Python with the backend installed (`ORGANIZER_PYTHON` to pick
-  which Python). Categories can't be edited in the app yet.
-- Exiting when the parent app dies relies on Unix behavior; on Windows a
-  crashed app can leave the backend running until it is ended manually.
+- Categories can't be edited in the app yet.
+- The downloadable app is Apple silicon only and unsigned (users click
+  "Open Anyway" once). Signing needs a paid Apple Developer account.
+- Exiting when the app dies is skipped on Windows; there a crashed app can
+  leave the backend running until it is ended manually.
 
 ## Decisions made along the way
 - Unknown file extensions fall back to an "Others" category rather than being
@@ -132,9 +138,9 @@
   carries the token, so it would otherwise always get 401.
 
 ## Where I left off
-- Backend API is complete (87 tests) and the desktop app's first version works:
+- Backend API is complete (91 tests) and the desktop app's first version works:
   `cd frontend && npm run tauri dev`.
 - Run the API on its own with: ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
 
 ## Next session
-- Decide on Stage 2 (tray icon) vs. packaging the sidecar.
+- Publish the first release, then Stage 2 (menu-bar icon) or category editing.

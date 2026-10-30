@@ -4,6 +4,7 @@
 
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -32,6 +33,29 @@ fn python_command() -> String {
     std::env::var("ORGANIZER_PYTHON").unwrap_or_else(|_| {
         if cfg!(windows) { "python" } else { "python3" }.to_string()
     })
+}
+
+// Release builds ship the backend packaged by `npm run build:sidecar`.
+// Tauri installs it next to the app's own executable.
+fn sidecar_path() -> Option<PathBuf> {
+    let name = if cfg!(windows) { "organizer-server.exe" } else { "organizer-server" };
+    let path = std::env::current_exe().ok()?.parent()?.join(name);
+    path.is_file().then_some(path)
+}
+
+// Returns the command that runs the backend, and a name for error messages.
+fn backend_command() -> (Command, String) {
+    if std::env::var_os("ORGANIZER_PYTHON").is_none() && !cfg!(debug_assertions) {
+        if let Some(sidecar) = sidecar_path() {
+            let name = sidecar.display().to_string();
+            return (Command::new(sidecar), name);
+        }
+    }
+
+    let python = python_command();
+    let mut command = Command::new(&python);
+    command.args(["-m", "organizer.server"]);
+    (command, python)
 }
 
 fn free_port() -> std::io::Result<u16> {
@@ -64,9 +88,9 @@ fn start_backend(app: &tauri::App) -> Backend {
         }
     };
 
-    let python = python_command();
-    let result = Command::new(&python)
-        .args(["-m", "organizer.server", "--port"])
+    let (mut command, program) = backend_command();
+    let result = command
+        .arg("--port")
         .arg(backend.port.to_string())
         .arg("--settings")
         .arg(settings)
@@ -78,7 +102,7 @@ fn start_backend(app: &tauri::App) -> Backend {
     match result {
         Ok(child) => backend.child = Mutex::new(Some(child)),
         Err(error) => {
-            backend.start_error = Some(format!("Could not run '{python}': {error}"))
+            backend.start_error = Some(format!("Could not run '{program}': {error}"))
         }
     }
     backend

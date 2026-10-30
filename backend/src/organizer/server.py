@@ -13,15 +13,30 @@ from organizer.service import OrganizerService
 TOKEN_VARIABLE = "ORGANIZER_TOKEN"
 
 
+def process_exists(pid):
+    try:
+        os.kill(pid, 0)  # Signal 0 only checks that the process exists.
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True  # It exists but belongs to another user.
+    return True
+
+
 def exit_when_parent_exits(parent_pid, request_exit, check_seconds=1.0):
-    """Call request_exit once the process that started this one has gone.
+    """Call request_exit once the app process (parent_pid) has gone.
 
     Covers the app crashing or being killed before it can send /shutdown.
-    When a parent exits, the operating system gives the child a new parent,
-    so this also works if the parent was already gone before this check began.
+    This checks the app's process id rather than this process's parent,
+    because the packaged backend runs under a small launcher process.
     """
+    if sys.platform == "win32":
+        # os.kill() would end the process on Windows; the app's own
+        # shutdown handles Windows instead.
+        return
+
     def watch():
-        while os.getppid() == parent_pid:
+        while process_exists(parent_pid):
             time.sleep(check_seconds)
         request_exit()
 

@@ -109,6 +109,15 @@ the final check and the move.
 Collision handling is a check followed by a move, not an atomic guarantee
 against concurrent writers.
 
+### Demo: demo.py
+
+`python3 -m organizer.demo [folder]` writes sample files into
+`<folder>/Downloads` (a new temporary folder by default) and runs them through
+`queue_existing_files()` and `DownloadHandler.process_pending()`, the same
+steps as the real organizer. The only difference is a zero-second stability
+period, because the sample files are already complete. The demo refuses a
+folder that is not empty.
+
 ### Logging
 
 Successful moves record source and destination paths. Pending-file operation
@@ -141,10 +150,8 @@ response is sent. When Uvicorn exits for any reason (shutdown request,
 before the process ends.
 
 `--parent-pid` covers the app crashing or being force-quit before it can send
-`/shutdown`. A background thread checks once per second whether the server's
-parent is still that process; the operating system gives orphaned processes a
-new parent. This relies on Unix behavior; on Windows the app still ends the
-backend on a normal quit.
+`/shutdown`. A background thread checks once per second whether that process still exists. It is skipped on Windows, where `os.kill()` would end the process;
+there the app still ends the backend on a normal quit.
 
 ### HTTP API: api.py
 
@@ -220,9 +227,11 @@ open. A held lock makes `POST /start` return `409 already_running`.
 The Tauri app (`frontend/src-tauri/src/lib.rs`) owns the backend process:
 
 1. At launch it picks a free port, generates a random token (UUID v4), and
-   runs `python3 -m organizer.server` with `--port`, `--settings` (in the app
-   data folder), `--parent-pid`, and `ORGANIZER_TOKEN`. Set `ORGANIZER_PYTHON`
-   to use a different Python executable.
+   starts the backend with `--port`, `--settings` (in the app data folder),
+   `--parent-pid`, and `ORGANIZER_TOKEN`. Development builds run
+   `python3 -m organizer.server` (set `ORGANIZER_PYTHON` to use a different
+   Python). Release builds run the packaged backend that ships next to the
+   app's executable (see [Packaging](#packaging)).
 2. The window calls the `backend_connection` command to get the port and
    token. The command reports an error if Python could not be started or the
    backend has already exited.
@@ -234,6 +243,37 @@ every two seconds while the window is visible. It shows the state, start and
 stop buttons, folder pickers, the categories, and recent activity. Closing the
 window quits the app and stops the organizer (Stage 1 in ADR 002); the window
 says so next to the Start button.
+
+## Packaging
+
+`npm run release` (in `frontend/`) does two things:
+
+1. `scripts/build-sidecar.sh` creates a throwaway virtual environment,
+   installs the backend and PyInstaller, and builds one executable from
+   `backend/packaging/organizer_server.py`. All `uvicorn` and `watchdog`
+   submodules are included because both pick modules at run time. The result
+   is copied to `src-tauri/binaries/organizer-server-<target triple>`, the
+   name Tauri expects for bundled executables ("sidecars").
+2. `tauri build --config src-tauri/tauri.release.conf.json` builds the `.app`
+   and `.dmg`. Only the release config lists the sidecar, so development and
+   `cargo test` work without building it first.
+
+A single-file PyInstaller program runs as two processes on macOS and Linux:
+a small launcher, and Python as its child. This is why `--parent-pid` checks
+whether the app's process still exists instead of comparing it with this
+process's parent. Ending the launcher does not end the child, but the child
+exits on its own within a second of the app being gone.
+
+The first launch takes a few seconds while the packaged backend unpacks;
+the window shows "Waiting for the organizer backend to start…" meanwhile.
+
+`.github/workflows/release.yaml` runs on tags like `v1.0.0`: it checks that
+the tag matches `version` in `tauri.conf.json`, runs `npm run release` on an
+Apple silicon macOS runner, and creates a draft GitHub Release with the
+`.dmg` and the notes in `.github/release-notes.md`.
+
+The app is not code-signed or notarized, so macOS asks the user to approve
+it once in System Settings. Signing needs an Apple Developer account.
 
 ## Error behavior
 
@@ -292,7 +332,7 @@ Run from the repository root:
 python3 -m pytest backend/test -v
 ```
 
-All 87 Python tests pass. Coverage includes startup files, temporary
+All 91 Python tests pass. Coverage includes startup files, temporary
 downloads, created and moved files, changing files, duplicate events,
 disappearing files, retrying a failed move, configuration errors, multi-part
 extensions, the activity log, the lock file, the watcher service (start, stop,
@@ -315,8 +355,8 @@ all five lines intact. This verifies that scenario, not every download pattern.
   are not implemented.
 - A file that keeps failing to move adds an `error` activity event on every
   retry, which can push older events out of the 100-event list.
-- The app needs Python and the backend package installed; packaging the
-  backend as a standalone sidecar is future work.
+- The downloadable app is built for Apple silicon Macs only, and is not
+  signed. Other platforms run from source.
 - `clean_filename()` treats only the last extension as the extension, so
   `backup.tar.gz` becomes `Backup.Tar.gz`; title-casing can also be awkward.
 
