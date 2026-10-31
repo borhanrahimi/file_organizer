@@ -79,6 +79,8 @@
 - [x] Release workflow: a version tag builds the .dmg into a draft GitHub Release
 - [x] App icon
 - [x] Published v1.0.0 on GitHub Releases (macOS, Apple silicon)
+- [x] Short README; user guide, development guide, changelog, contributing,
+      security policy, and issue templates
 
 ## Next
 - [ ] Manually check the app end to end: choose folders, start, drop files in,

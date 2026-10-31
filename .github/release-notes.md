@@ -16,5 +16,7 @@ The app includes everything it needs; you don't need Python installed.
 Choose a source folder (for example Downloads) and a destination folder,
 click **Save folders**, then **Start**. Closing the window stops the organizer.
 
-Intel Macs, Windows, and Linux: run from source; see the
-[README](https://github.com/borhanrahimi/file_organizer#getting-started).
+Full instructions and troubleshooting: see the
+[user guide](https://github.com/borhanrahimi/file_organizer/blob/main/docs/user-guide.md).
+Intel Macs, Windows, and Linux: run from source with the
+[development guide](https://github.com/borhanrahimi/file_organizer/blob/main/docs/development.md).
