@@ -78,11 +78,11 @@
       longer needs Python (`npm run release` builds the .dmg)
 - [x] Release workflow: a version tag builds the .dmg into a draft GitHub Release
 - [x] App icon
+- [x] Published v1.0.0 on GitHub Releases (macOS, Apple silicon)
 
 ## Next
 - [ ] Manually check the app end to end: choose folders, start, drop files in,
       stop, quit (confirm no `organizer.server` process is left)
-- [ ] Set the version, push a tag, and publish the first GitHub Release
 - [ ] Write a short "What I learned" section for the README
 
 ## Later / optional
@@ -143,4 +143,4 @@
 - Run the API on its own with: ORGANIZER_TOKEN=dev-secret python3 -m organizer.server --port 8000
 
 ## Next session
-- Publish the first release, then Stage 2 (menu-bar icon) or category editing.
+- Stage 2 (menu-bar icon) or category editing.
